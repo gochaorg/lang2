@@ -1931,7 +1931,7 @@ public class CLI
         if( helps.containsKey(file) )return helps.get(file);
         
         if( !file.contains("/") ){
-            file = "/lang2/res/"+file;
+            file = "/xyz/cofe/lang2/res/"+file;
         }
         String tmpl = FileUtil.readAllText(CLI.class.getResource(file),FileUtil.UTF8());
         

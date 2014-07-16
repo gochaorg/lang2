@@ -73,7 +73,7 @@ public class Resource extends LinkedHashMap<String, String> {
         if( !locale )return readProperties(name);
         
         if( !name.contains("/") ){
-            name = "/lang2/res/" + name;
+            name = "/xyz/cofe/lang2/res/" + name;
         }
         
         Locale loc = Locale.getDefault();
@@ -108,7 +108,7 @@ public class Resource extends LinkedHashMap<String, String> {
         if (name== null) {
             throw new IllegalArgumentException("name==null");
         }
-        if( !name.contains("/") )name = "/lang2/res/"+name;
+        if( !name.contains("/") )name = "/xyz/cofe/lang2/res/"+name;
         URL url = Resource.class.getResource(name);
         if( url==null )return null;
         return readProperties(url);
