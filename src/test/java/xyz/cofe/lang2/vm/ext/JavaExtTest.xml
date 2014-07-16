@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<logConfig>
+    <logger name="root" level="all"></logger>
+    <filters>
+        <filter name="jreMethodCall" union="and">
+            <like property="logger" value="*JREMethodCallWrapper*" />
+        </filter>
+        <filter name="CallVariantComparator" union="and">
+            <like property="logger" value="*CallVariantComparator*" />
+        </filter>
+        <filter name="CallableArguments" union="and">
+            <like property="logger" value="*CallableArguments*" />
+        </filter>
+        <filter name="NVariable" union="and">
+            <like property="logger" value="*NVariable*" />
+        </filter>
+        <filter name="VariableDef" union="and">
+            <like property="logger" value="*VariableDeffine*" />
+        </filter>
+        <filter name="DebugWrapperValue">
+            <like property="logger" value="*DebugWrapperValue*" />
+        </filter>
+        <filter name="Operator">
+            <like property="logger" value="*Operator*" />
+        </filter>
+        <filter name="ExecFlow">
+            <like property="logger" value="*ExecuteFlowValue*" />
+        </filter>
+        <filter name="VrFunction">
+            <like property="logger" value="*VrFunction*" />
+        </filter>
+        <filter name="L2Engine">
+            <like property="logger" value="*L2Engine*" />
+        </filter>
+        <filter name="config">
+            <like property="logger" value="lang2.res.*" />
+        </filter>
+        <filter name="JavaTypeExtender">
+            <like property="logger" value="*JavaTypeExtender*" />
+        </filter>
+    </filters>
+    <rewriter name="lang2">
+        <regex>
+            <pattern>(?is)lang2\.vm\.op\.(.*)</pattern>
+            <replace>$1</replace>
+        </regex>
+    </rewriter>
+    <rewriter name="lang21">
+        <regex>
+            <pattern>(?is)lang2\.vm\.(.*)</pattern>
+            <replace>$1</replace>
+        </regex>
+    </rewriter>
+    <rewriter name="lang22">
+        <regex>
+            <pattern>(?is)lang2\.parser\.(.*)</pattern>
+            <replace>$1</replace>
+        </regex>
+    </rewriter>
+    <rewriter name="lang23">
+        <regex>
+            <pattern>(?is)lang2\.res\.(.*)</pattern>
+            <replace>$1</replace>
+        </regex>
+    </rewriter>
+    <formats>
+        <format name="simple" class="xyz.cofe.log.SimpleFormatter">
+<template>
+{logger: 
+    wordwrap=true; 
+    width=20; 
+    align=left;
+    rewrite=lang2,lang21,lang22,lang23;
+}| 
+{message: wordwrap=true; width=80; align=left}
+</template>
+            <table>true</table>
+            <appendEmptyLine>1</appendEmptyLine>
+            <appendEmptyLineMore>0</appendEmptyLineMore>
+            <insertEmptyLineMore>0</insertEmptyLineMore>
+        </format>
+    </formats>
+    <handler name="console" class="xyz.cofe.log.ConsoleHandler" level="all">
+        <format name="simple" />
+        <filter>
+            <or>
+                <filter name="config" />
+                <!-- <filter name="JavaTypeExtender" /> -->
+            </or>
+        </filter>
+    </handler>
+</logConfig>

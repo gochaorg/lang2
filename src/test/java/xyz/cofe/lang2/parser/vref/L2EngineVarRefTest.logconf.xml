@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<logConfig>
+    <logger name="root" level="all"></logger>
+    <filters>
+        <filter name="jreMethodCall" union="and">
+            <like property="logger" value="*JREMethodCallWrapper*" />
+        </filter>
+        <filter name="CallVariantComparator" union="and">
+            <like property="logger" value="*CallVariantComparator*" />
+        </filter>
+        <filter name="CallableArguments" union="and">
+            <like property="logger" value="*CallableArguments*" />
+        </filter>
+        <filter name="NVariable" union="and">
+            <like property="logger" value="*NVariable*" />
+        </filter>
+        <filter name="VariableDef" union="and">
+            <like property="logger" value="*VariableDeffine*" />
+        </filter>
+        <filter name="DebugWrapperValue">
+            <like property="logger" value="*DebugWrapperValue*" />
+        </filter>
+        <filter name="Operator">
+            <like property="logger" value="*Operator*" />
+        </filter>
+        <filter name="ExecFlow">
+            <like property="logger" value="*ExecuteFlowValue*" />
+        </filter>
+    </filters>
+    <rewriter name="lang2.vm.op">
+        <regex>
+            <pattern>(?is)lang2\.vm\.op\.(.*)</pattern>
+            <replace>$1</replace>
+        </regex>
+    </rewriter>
+    <formats>
+        <format name="simple" class="tv.cofe.cli.SimpleFormatter">
+<template>
+{logger: 
+    wordwrap=true; 
+    width=10; 
+    align=left;
+    rewrite=lang2.vm.op;
+}| 
+{message: wordwrap=true; width=65; align=left}
+</template>
+            <table>true</table>
+            <appendEmptyLine>1</appendEmptyLine>
+            <appendEmptyLineMore>0</appendEmptyLineMore>
+            <insertEmptyLineMore>0</insertEmptyLineMore>
+        </format>
+    </formats>
+    <handler name="console" class="tv.cofe.cli.ConsoleHandler" level="all">
+        <format name="simple" />
+        <filter>
+            <or>
+                <filter name="jreMethodCall" />
+                <filter name="CallVariantComparator" />
+                <filter name="CallableArguments" />
+                <filter name="NVariable" />
+                <filter name="Variable" />
+                <filter name="VariableDef" />
+                <!-- <filter name="DebugWrapperValue" /> -->
+                <filter name="Operator" />
+                <filter name="ExecFlow" />
+            </or>
+        </filter>
+    </handler>
+</logConfig>

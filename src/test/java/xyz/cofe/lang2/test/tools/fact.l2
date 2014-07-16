@@ -1,0 +1,10 @@
+/* debug 1 */
+var fact = function( a ) {
+    // single
+    // comment
+    if( a < 2 ) return a;
+    /* debug 2 */
+    if( a > 2 ) recursion( a-1 ) * a else a;
+}
+
+fact( 4 )

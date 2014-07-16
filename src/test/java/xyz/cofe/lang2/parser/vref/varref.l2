@@ -1,0 +1,8 @@
+var fnA = function(arg) {
+    var fnB = function() {
+        return arg + arg;
+    };
+    return fnB;
+};
+var arg = "a";
+fnA( "b" )();

@@ -1,0 +1,49 @@
+var subset = function ( list, count ){
+	if( count > list.size() ) count = list.size();
+	if( count < 1 )return [];
+	var l = [];
+	var i = 0;
+	while( i < count ){
+		l[l.size()] = list[i];
+		i = i + 1;
+	}
+	i = 0;
+	while( i < count ){
+		list.remove( 0 );
+		i = i + 1;
+	}
+};
+
+var dump = function() {
+    println( "var dump" );
+    for( varName in memory().keys ){
+        println( " {name:10} : {t}".template( {name:varName, t:typeof(memory()[varName])} ) );
+    }
+};
+
+var list = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+
+dump();
+println( "before list" );
+println( list );
+
+subset( list, 5 );
+
+println( "after list" );
+println( list );
+dump();
+
+// if( l ){
+//    println( "var l:" );
+//    println( l );
+//}
+
+
+subset( list, 5 );
+
+println( "after list 2" );
+println( list );
+dump();
+
+//println( "var l:" );
+//println( l );

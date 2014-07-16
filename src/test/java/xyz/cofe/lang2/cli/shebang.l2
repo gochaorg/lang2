@@ -1,0 +1,6 @@
+#!/bin/sh
+exec java -cp lang2.jar lang2.cli.CLI -f "$0" "$@"
+!#
+# coding: utf-8
+
+println( "hello" );

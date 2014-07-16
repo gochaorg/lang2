@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+    <!-- 
+    При старте выполнить следующие записи (через запятую): 
+    например указана startup.exec.etc
+    тогда 1. будейт найдена запись startup.exec.etc
+          2. Ее значение будет использоваться как путь к файлу - шаблон
+             Возможные переменные - lang2.parser.CLI.getHelpVars
+    -->
+    <entry key="startup.exec.entries">startup.exec.etc, startup.exec.home</entry>
+    <entry key="startup.exec.etc">/etc/{application.programm}.l2</entry>
+    <entry key="startup.exec.home">{user.home}/.{application.programm}.l2</entry>
+</properties>

@@ -1,0 +1,4 @@
+var v = "abc";
+var obj = { f : function ( a ) { a + v } }; 
+v = "def"; 
+obj.f( "xcv" )

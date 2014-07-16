@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+<entry key="java">
+    Создает java объект, первый аргумент - имя java класса, 
+    последующие аргументы передаются конструктору класса.
+    Пример:
+        L2> var f = java( "java.io.File", "./" );
+        .
+        L2> f.listFiles();
+        [ ./build, ./nbproject ]
+</entry>
+<entry key="memory">
+    Возвращает содержимое оперативной памяти интерпретатора в виде объекта.
+    Пример - выводит перечень переменных.
+        L2> for( varName in memory().keys ){ println( varName ); }
+        typeof
+        help
+        println
+        eval
+        cli
+        exit
+        print
+        memory
+        readln
+</entry>
+<entry key="typeof">
+    Возвращает тип данных указанных в первом аргументе.
+    Возможные значения:
+        "null"
+        "function"
+        "list"
+        "object"
+        "string"
+        "bool"
+        "int"
+        "byte"
+        "short"
+        "long"
+        "float"
+        "double"
+        "undefined"
+        "JREObject"
+    Примеры:
+        L2> typeof( 1+2 )
+        "int"
+        L2> typeof( "abc" )
+        "string"
+        L2> typeof( {a:1} )
+        "object"
+        L2> typeof( true )
+        "bool"
+        L2> typeof( [ 1, 2 ] )
+        "list"
+        L2> typeof( function( a ){ a } )
+        "function"
+        L2> typeof( null )
+        "null"
+</entry>
+<entry key="eval">
+    Выполняет указанный исходный код в первом аргументе и возвращает результат выполнения.
+    Пример:
+        L2> var v = eval( "1+3" )
+        4
+</entry>
+<entry key="help">
+    Выводит справку по указанной функции.
+    Если функция не указана, то выведет общую справку.
+    Пример:
+    L2> help( "println" )
+        Выводит переданные аргументы на стандартный поток 
+        ввода-вывода и дополняет переводом строки
+        Пример:
+            L2> println( 1, "abc", true, null )
+            1abctruenull
+            
+    Что бы посмотреть список доступных функций выполнитете следующий код:
+        L2> for( varName in memory().keys ){ 
+                if ( typeof(memory()[varName]) == "function" ) 
+                    println( varName ); 
+            }
+        typeof
+        help
+        println
+        eval
+        exit
+        print
+        memory
+        readln
+        java         
+</entry>
+<entry key="readln">
+    Читает данные из стандартного потока ввода-вывода и возвращает строку.
+    Если данных нет, то вернет null
+    Необязательный аргумент подсказка выводимая пользователю
+    Пример 1:
+        L2> readln()
+        >>> abc
+        "abc"
+    Пример 2:
+        L2> readln( "enter x > " )
+        enter x > abc
+        "abc"
+</entry>
+<entry key="println">
+    Выводит переданные аргументы на стандартный поток ввода-вывода и дополняет переводом строки
+    Пример:
+        L2> println( 1, "abc", true, null )
+        1abctruenull
+</entry>
+<entry key="print">
+    Выводит переданные аргументы на стандартный поток ввода-вывода
+    Пример:
+        L2> print( 1,2,3 )
+        123
+</entry>
+<entry key="exit">
+    Завершаер работу скрипта
+    Необязательный аргумент - код выхода
+    Пример:
+        $ dist/bin/lang2 -i
+        Для завершения работы наберите exit() и нажмите ENTER
+        L2> exit(234)
+        null
+        [04:02:12]gocha@gocha-notebook:~/Программирование/projects/jgef/lang2
+        $ echo $?
+        234
+</entry>
+</properties>
