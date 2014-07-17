@@ -1,5 +1,5 @@
 Справка по запуску интерпретатора
-  {application.programm} [опции]
+  {implementationTitle} [опции]
 
 Опции
   -h               Выводит эту справку
@@ -39,5 +39,6 @@
   -e Выражение
 
 ---------------------------------------------------------
-Лицензия {application.lic} версия {application.build.version} дата сброки {application.build.date}
-{application.author} {application.homepage}
+     Версия {implementationVersion}
+GIT коммент {gitCommit}
+дата сброки {buildDate}

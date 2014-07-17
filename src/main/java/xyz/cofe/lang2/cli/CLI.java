@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -35,6 +36,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import xyz.cofe.lang2.lib.CLIFunctions;
@@ -1230,7 +1232,7 @@ public class CLI
 //</editor-fold>
             
             //<editor-fold defaultstate="collapsed" desc="-h | --help //Справка">
-            if( arg.equalsIgnoreCase("-h") && arg.equalsIgnoreCase("--help") ){
+            if( arg.equalsIgnoreCase("-h") || arg.equalsIgnoreCase("--help") ){
                 System.out.println(help(HELP_MAIN));
                 continue;
             }
@@ -1945,6 +1947,8 @@ public class CLI
     
     protected static Map<String,String> helpVars = null;
     
+    private static ClassLoader CLI_CL = CLI.class.getClassLoader();
+    
     /**
      * Переменные для справки.<br/><br/>
      * <b style="font-size:120%">Переменные java </b><br/>
@@ -2016,101 +2020,43 @@ public class CLI
      * <b style="font-size:120%">Переменные сборки:</b> <br/>
      * <table cellspacing="0" cellpadding="3" border="1" >
      * <tr>
-     * <td><b>application.programm</b></td>
-     * <td>Запускаемый файл (lang2)</td></tr><tr>
+     * <td><b>gitComment</b></td>
+     * <td>....</td></tr><tr>
      * 
-     * <td><b>application.author</b></td>
-     * <td>Автор программы (Камнев Георгий Павлович)</td></tr><tr>
+     * <td><b>buildDate</b></td>
+     * <td>2014-07-17 12:53</td></tr><tr>
      * 
-     * <td><b>application.brand</b></td>
-     * <td>Бренд (cofe.tv)</td></tr><tr>
+     * <td><b>implementationVersion</b></td>
+     * <td>1.0-SNAPSHOT</td></tr><tr>
 
      * 
-     * <td><b>application.lic</b></td>
-     * <td>Лицензия (GPLv2)</td></tr><tr>
+     * <td><b>implementationVendorID</b></td>
+     * <td>xyz.cofe</td></tr><tr>
      * 
-     * <td><b>application.homepage</b></td>
-     * <td>Домашняя стрица (http://code.google.com/p/jgef/)</td></tr><tr>
-     * 
-     * <td><b>application.build.date</b></td>
-     * <td>Дата сборки (2013-08-15)</td></tr><tr>
-     * 
-     * <td><b>application.build.version</b></td>
-     * <td>Версия программы (0.1.204)</td></tr><tr>
-     * 
-     * <td><b>application.vendor</b></td>
-     * <td>Издатель (nt.gocha@gmail.com)</td></tr><tr>
-     * 
-     * <td><b>application.title</b></td>
-     * <td>Заголовок (краткое описание)</td>
-     * </tr>
+     * <td><b>implementationTitle</b></td>
+     * <td>lang2</td></tr>
      * </table>
      * @return Переменные для справки
      */
     public static Map<String,String> getHelpVars(){
         if( helpVars!=null )return helpVars;
-        
-        Properties buildProps = Resource.readProperties("build.properties", false);
-        
-//        URLClassLoader cl = (URLClassLoader) CLI.class.getClassLoader();
-//        URL url = cl.findResource("META-INF/MANIFEST.MF");        
         helpVars = new HashMap<String, String>();
+
+        Object buildDate = "2014-07-17 12:08";
+        Object gitCommit = "unknow-commit no manifest";
+        Object implementationVersion = "1.0-SNAPSHOT";
+        Object implementationVendorID = "xyz.cofe";
+        Object implementationTitle = "lang2";
         
-        Object version = null;
-        Object prog = null;
-        Object buildDate = null;
-        Object lic = null;
-        Object author = null;
-        Object home = null;
-        Object title = null;
-        Object vendor = null;
+        Properties buildProps = Resource.readProperties("build.properties");
         
         if( buildProps!=null ){
-            version     = buildProps.get("application.build.version");
-            prog        = buildProps.get("application.programm");
-            buildDate   = buildProps.get("application.build.date");
-            lic         = buildProps.get("application.lic");
-            author      = buildProps.get("application.author");
-            home        = buildProps.get("application.homepage");
-            title       = buildProps.get("application.title");
-            vendor      = buildProps.get("application.vendor");
+            gitCommit = buildProps.getProperty("buildNumber","unknow-commit no into manifest");
+            buildDate = buildProps.getProperty("build.time","2014-07-17");
+            implementationVersion = buildProps.getProperty("project.version","1.0-SNAPSHOT");
+            implementationVendorID = buildProps.getProperty("project.groupId","xyz.cofe");
+            implementationTitle = buildProps.getProperty("project.artifactId","lang2");
         }
-        
-//        if( url!=null ){
-//            String meta = FileUtil.readAllText(url,FileUtil.UTF8());
-//            if( meta!=null ){
-//                String[] lines = TextUtil.splitNewLines(meta);
-//                for( String line : lines ){
-//                    String tline = line.trim();
-//                    if( tline.startsWith("#") )continue;
-//                    if( tline.length()==0 )continue;
-//                    
-//                    if( tline.startsWith("programm:") )
-//                        prog = tline.substring("programm:".length()).trim();
-//                    
-//                    if( tline.startsWith("lic:") )
-//                        lic = tline.substring("lic:".length()).trim();
-//                    
-//                    if( tline.startsWith("author:") )
-//                        author = tline.substring("author:".length()).trim();
-//                    
-//                    if( tline.startsWith("home:") )
-//                        home = tline.substring("home:".length()).trim();
-//                    
-//                    if( tline.startsWith("Implementation-Version:") )
-//                        version = tline.substring("Implementation-Version:".length()).trim();
-//                    
-//                    if( tline.startsWith("Built-Date:") )
-//                        buildDate = tline.substring("Built-Date:".length()).trim();
-//                    
-//                    if( tline.startsWith("Implementation-Title:") )
-//                        title = tline.substring("Implementation-Title:".length()).trim();
-//                    
-//                    if( tline.startsWith("Implementation-Vendor:") )
-//                        vendor = tline.substring("Implementation-Vendor:".length()).trim();
-//                }
-//            }
-//        }
         
         // Системные переменные java
         for( Object key : System.getProperties().keySet() ){
@@ -2127,24 +2073,11 @@ public class CLI
             helpVars.put("env."+envVar, val);
         }
         
-        // Перменные сборки
-        if( version==null )version = "0.1.1";
-        if( prog==null )prog = "lang2";
-        if( buildDate==null )buildDate = "2013-02-13";
-        if( lic==null )lic = "GPLv2";
-        if( author==null )author = "Камнев Георгий Павлович";
-        if( home==null )home = "http://code.google.com/p/jgef/";
-        if( title==null )title = prog;
-        if( vendor==null )vendor = author;
-
-        helpVars.put("application.programm", prog.toString());
-        helpVars.put("application.author", author.toString());
-        helpVars.put("application.lic", lic.toString());
-        helpVars.put("application.homepage", home.toString());
-        helpVars.put("application.build.date", buildDate.toString());
-        helpVars.put("application.build.version", version.toString());
-        helpVars.put("application.vendor", vendor.toString());
-        helpVars.put("application.title", title.toString());
+        helpVars.put("gitCommit", gitCommit.toString());
+        helpVars.put("buildDate", buildDate.toString());
+        helpVars.put("implementationVersion", implementationVersion.toString());
+        helpVars.put("implementationVendorID", implementationVendorID.toString());
+        helpVars.put("implementationTitle", implementationTitle.toString());
         
         return helpVars;
     }
