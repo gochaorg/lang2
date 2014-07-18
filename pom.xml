@@ -55,6 +55,12 @@
         <url>scm:git:git@github.com:gochaorg/lang2.git</url>
         <developerConnection>scm:git:git@github.com:gochaorg/lang2.git</developerConnection>
     </scm>
+	<repositories>
+		<repository>
+			<id>dropbox</id>
+			<url>https://dl.dropboxusercontent.com/u/21708112/maven-repo</url>
+		</repository>
+	</repositories>
     <build>
         <plugins>
             <plugin>
@@ -150,4 +156,10 @@
             </testResource>
         </testResources>
     </build>
+    <distributionManagement>
+        <repository>
+            <id>dropbox</id>
+            <url>file:${env.MAVEN_REPO_DROPBOX_DIR}</url>
+        </repository>
+    </distributionManagement>
 </project>
