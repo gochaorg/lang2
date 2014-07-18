@@ -23,11 +23,7 @@
  */
 package xyz.cofe.lang2.lib;
 
-import java.io.OutputStreamWriter;
-import javax.swing.JFrame;
-import xyz.cofe.text.IndentStackWriter;
 import org.junit.*;
-import static org.junit.Assert.*;
 import xyz.cofe.config.SimpleConfig;
 //import lang2.lib.
 
@@ -55,6 +51,60 @@ public class PrintTest {
     @After
     public void tearDown() {
     }
+
+    public static class SubCmptStr {
+        private String str = null;
+
+        public String getStr() {
+            return str;
+        }
+
+        public void setStr(String str) {
+            this.str = str;
+        }
+        
+        public void test(){
+        }
+    }
+    
+    public static class SubCmptInt {
+        private int num = 0;
+
+        public int getNum() {
+            return num;
+        }
+
+        public void setNum(int num) {
+            this.num = num;
+        }
+        
+        public void test2(){
+        }
+    }
+    
+    public static class Cmpt {
+        private SubCmptStr str1 = new SubCmptStr();
+        private SubCmptInt int1 = new SubCmptInt();
+        public int test3(boolean a1){
+            return 0;
+        }
+
+        public SubCmptStr getStr1() {
+            return str1;
+        }
+
+        public void setStr1(SubCmptStr str1) {
+            this.str1 = str1;
+        }
+
+        public SubCmptInt getInt1() {
+            return int1;
+        }
+
+        public void setInt1(SubCmptInt int1) {
+            this.int1 = int1;
+        }
+    }
     
     // TODO add test methods here.
     // The methods must be annotated with annotation @Test. For example:
@@ -66,9 +116,7 @@ public class PrintTest {
         
         DescJRE printJre = new DescJRE(conf);
         
-        JFrame frame = new JFrame();
-        String desc = printJre.descJREObject(frame);
-        
+        String desc = printJre.descJREObject(new Cmpt());
         System.out.println(desc);
 //        out.flush();
     }
