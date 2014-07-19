@@ -21,12 +21,12 @@
  * ПРИЧИНОЙ ИЛИ СВЯЗАННЫМ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ ИЛИ ИСПОЛЬЗОВАНИЕМ ПРОГРАММНОГО ОБЕСПЕЧЕНИЯ 
  * ИЛИ ИНЫМИ ДЕЙСТВИЯМИ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ.
  */
-package xyz.cofe.lang2.vm.jre;
+package xyz.cofe.lang2.lib;
 
+import xyz.cofe.lang2.lib.InterfaceProxyGen;
 import java.awt.event.ActionListener;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import xyz.cofe.lang2.parser.L2Engine;
@@ -34,14 +34,13 @@ import xyz.cofe.lang2.vm.Value;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.SimpleCompiler;
 import xyz.cofe.collection.Convertor;
-import xyz.cofe.common.Reciver;
-import xyz.cofe.jdk.ByteCode;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import xyz.cofe.collection.Predicate;
 
 /**
  *
@@ -82,8 +81,8 @@ public class ProxyTest {
         String clssName = cls.getName().replace(".", "_");
 
         pg.setInterfaceClass(cls);
-        pg.setPackageName("lang2.vm.jre.gen");
-        pg.setClassName(clssName);
+        pg.getJavaClassName().setPackageName("lang2.vm.jre.gen");
+        pg.getJavaClassName().setClassName(clssName);
         
         System.out.println(pg.generate());
     }
@@ -96,16 +95,16 @@ public class ProxyTest {
         String clssName = cls.getName().replace(".", "_");
 
         pg.setInterfaceClass(cls);
-        pg.setPackageName("lang2.vm.jre.gen");
-        pg.setClassName(clssName);
+        pg.getJavaClassName().setPackageName("lang2.vm.jre.gen");
+        pg.getJavaClassName().setClassName(clssName);
         
         System.out.println(pg.generate());
     }
     
     @Test
-    public void test03(){
-        System.out.println("test03");
-        System.out.println("======");
+    public void convertor(){
+        System.out.println("convertor");
+        System.out.println("=========");
         
         // Создаение l2 объекта
         L2Engine l2engine = new L2Engine();
@@ -131,8 +130,8 @@ public class ProxyTest {
         String clssName = cls.getName().replace(".", "_");
         
         pg.setInterfaceClass(cls);
-        pg.setPackageName("lang2.vm.jre.gen");
-        pg.setClassName(clssName);
+        pg.getJavaClassName().setPackageName("xyz.cofe.lang2.vm.jre.gen");
+        pg.getJavaClassName().setClassName(clssName);
         
         String source = pg.generate();
         
@@ -148,7 +147,7 @@ public class ProxyTest {
             ClassLoader ccl = compiler.getClassLoader();
             
             // Получение class сгенерированого исходника
-            Class c1 = ccl.loadClass(pg.getFullClassName());
+            Class c1 = ccl.loadClass(pg.getJavaClassName().getFullClassName());
             assertTrue(c1!=null);
             
             boolean isConv = cls.isAssignableFrom(c1);
@@ -165,6 +164,89 @@ public class ProxyTest {
             
             assertTrue( resValue instanceof String );
             assertTrue( resValue.equals("AbcAbc") );
+            
+        } catch (CompileException ex) {
+            Logger.getLogger(ProxyTest.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(ProxyTest.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NoSuchMethodException ex) {
+            Logger.getLogger(ProxyTest.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SecurityException ex) {
+            Logger.getLogger(ProxyTest.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            Logger.getLogger(ProxyTest.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            Logger.getLogger(ProxyTest.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalArgumentException ex) {
+            Logger.getLogger(ProxyTest.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InvocationTargetException ex) {
+            Logger.getLogger(ProxyTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    @Test
+    public void test04_predicate(){
+        System.out.println("test04_predicate");
+        System.out.println("===================");
+        
+        // Создаение l2 объекта
+        L2Engine l2engine = new L2Engine();
+        Value l2ParseTree = l2engine.parse(
+                "var filterEven = {\n"
+            +   "  validate : function( self, value ) {\n"
+            +   "    value % 2 == 0\n"
+            +   "  }\n"
+            +   "};\n"
+            + "filterEven");
+        assertTrue(l2ParseTree!=null);
+        
+        Object ol2val = l2ParseTree.evaluate();
+        assertTrue(ol2val!=null);
+        assertTrue(ol2val instanceof java.util.Map);
+        
+        java.util.Map l2Object = (java.util.Map)ol2val;
+
+        // Генерирование исходника proxy
+        Class cls = Predicate.class;
+        
+        InterfaceProxyGen pg = new InterfaceProxyGen();
+        String clssName = cls.getName().replace(".", "_");
+        
+        pg.setInterfaceClass(cls);
+        pg.getJavaClassName().setPackageName("xyz.cofe.lang2.vm.jre.gen");
+        pg.getJavaClassName().setClassName(clssName);
+        
+        String source = pg.generate();
+        
+        try {
+            // Компиляция исходника
+            SimpleCompiler compiler = new SimpleCompiler();
+            
+            ClassLoader cl = this.getClass().getClassLoader();
+            compiler.setParentClassLoader(cl);
+            
+            compiler.cook(source);
+            
+            ClassLoader ccl = compiler.getClassLoader();
+            
+            // Получение class сгенерированого исходника
+            Class c1 = ccl.loadClass(pg.getJavaClassName().getFullClassName());
+            assertTrue(c1!=null);
+            
+            boolean isConv = cls.isAssignableFrom(c1);
+            assertTrue( isConv );
+            
+            // Создание proxy объекта
+            Constructor constr = c1.getConstructor( java.util.Map.class );
+            Object proxy = constr.newInstance(l2Object);
+            assertTrue( proxy instanceof Predicate );
+            
+            // Тестирование proxy
+            Object resValue = ((Predicate)proxy).validate(10);
+            
+            assertTrue( resValue != null );
+            assertTrue( resValue instanceof Boolean );
+            assertTrue( (Boolean)resValue );
             
         } catch (CompileException ex) {
             Logger.getLogger(ProxyTest.class.getName()).log(Level.SEVERE, null, ex);

@@ -38,12 +38,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import xyz.cofe.collection.Iterators;
 import xyz.cofe.collection.Predicate;
+import xyz.cofe.common.JavaClassName;
 import xyz.cofe.common.Reciver;
 import xyz.cofe.files.FileUtil;
 import xyz.cofe.config.SimpleConfig;
@@ -100,16 +102,17 @@ public class DynamicClassLoader extends URLClassLoader {
     
     private SimpleConfig conf = null;
     
+    //<editor-fold defaultstate="collapsed" desc="Конструкторы">
     public DynamicClassLoader(){
         super(new URL[]{});
         init(new SimpleConfig());
     }
-
+    
     public DynamicClassLoader(SimpleConfig conf){
         super(new URL[]{});
         init(conf==null ? new SimpleConfig() : conf);
     }
-
+    
     public DynamicClassLoader(ClassLoader parent) {
         super(new URL[]{},parent);
         init(new SimpleConfig());
@@ -124,7 +127,7 @@ public class DynamicClassLoader extends URLClassLoader {
         super(urls,parent,f);
         init(new SimpleConfig());
     }
-
+    
     public DynamicClassLoader(ClassLoader parent,SimpleConfig conf) {
         super(new URL[]{},parent);
         init(conf==null ? new SimpleConfig() : conf);
@@ -139,6 +142,7 @@ public class DynamicClassLoader extends URLClassLoader {
         super(urls,parent,f);
         init(conf==null ? new SimpleConfig() : conf);
     }
+    //</editor-fold>
     
     private synchronized void init(SimpleConfig conf){
         this.conf = conf==null ? new SimpleConfig() : conf;
@@ -191,11 +195,7 @@ public class DynamicClassLoader extends URLClassLoader {
         return itr;
     }
     
-//    private Iterable<File> createJarSearch_forScriptDir( File scriptDir ){
-//        File libDir = new File( scriptDir, "lib" );
-//        return createJarSearch(libDir);
-//    }
-    
+    //<editor-fold defaultstate="collapsed" desc="notify reciver функции">
     public synchronized void evalScriptFile( File file ){
         if( file==null )return;
         Iterable<File> search = createJarSearch_forScriptFile(file);
@@ -211,7 +211,9 @@ public class DynamicClassLoader extends URLClassLoader {
     
     public synchronized void evalScriptFile( URL file ){
     }
+    //</editor-fold>
     
+    //<editor-fold defaultstate="collapsed" desc="Область поиска jar">
     protected Iterable<File> jars = null;
     public synchronized Iterable<File> getJars() { return jars; }
     public synchronized void setJars(Iterable<File> jars) { this.jars = jars; }
@@ -221,22 +223,31 @@ public class DynamicClassLoader extends URLClassLoader {
         if( j==null )return Iterators.empty();
         return j;
     }
+    //</editor-fold>
     
-    protected Map<String,Class> _classCache = null;
-    protected Map<String,Class> classCache(){
+    //<editor-fold defaultstate="collapsed" desc="class cache map">
+    protected Map<JavaClassName,Class> _classCache = null;
+    protected Map<JavaClassName,Class> classCache(){
         if( _classCache!=null )return _classCache;
-        _classCache = new HashMap<String, Class>();
+        _classCache = new TreeMap<JavaClassName, Class>();
         return _classCache;
     }
+    
+    public Map<JavaClassName,Class> getClassCacheMap(){
+        return classCache();
+    }
+    //</editor-fold>
 
-    protected Map<String,BinData> _classBinCache = null;
-    protected Map<String,BinData> classBinCache(){
+    //<editor-fold defaultstate="collapsed" desc="bin class cache map">
+    protected Map<JavaClassName,BinData> _classBinCache = null;
+    protected Map<JavaClassName,BinData> classBinCache(){
         if( _classBinCache!=null )return _classBinCache;
-        _classBinCache = new HashMap<String, BinData>();
+        _classBinCache = new TreeMap<JavaClassName, BinData>();
         return _classBinCache;
     }
+    //</editor-fold>
     
-    protected void putClassCacheFromBinCache( String className, Class cls, String binKey, BinData binData ){
+    protected void putClassCacheFromBinCache( JavaClassName className, Class cls, JavaClassName binKey, BinData binData ){
         logFiner( "put class {0} in classCahce from binCache", cls );
         classCache().put(className, cls);
         
@@ -245,15 +256,16 @@ public class DynamicClassLoader extends URLClassLoader {
     }
     
     public static class BinData {
-        protected String name = null;
+        protected JavaClassName name = null;
         protected byte[] data = null;
         
         public BinData(String name,byte[] data){
-            this.name = name;
+            if( name==null )throw new IllegalArgumentException( "name==null" );
+            this.name = new JavaClassName(name);
             this.data = data;
         }
 
-        public String getName() {
+        public JavaClassName getName() {
             return name;
         }
 
@@ -310,7 +322,7 @@ public class DynamicClassLoader extends URLClassLoader {
     
     protected void defineClasses( List<BinData> classes ){
         for( BinData v : classes ){
-            String k = v.getName();
+            JavaClassName k = v.getName();
             if( classBinCache().containsKey(k) ){
                 classBinCache().put(k, v);
             }
@@ -346,8 +358,8 @@ public class DynamicClassLoader extends URLClassLoader {
     }
     
     @Override
-    public synchronized Class<?> loadClass(String name) throws ClassNotFoundException {
-        if( name==null ){
+    public synchronized Class<?> loadClass(String fullClassName) throws ClassNotFoundException {
+        if( fullClassName==null ){
             throw new ClassNotFoundException("class null not found");
         }
 
@@ -357,31 +369,33 @@ public class DynamicClassLoader extends URLClassLoader {
             scan();
         }
         
-        logFine( "lookup in classCahce for class {0}", name );
-        Class ccls = classCache().get(name);
+        JavaClassName javaClassName = new JavaClassName(fullClassName);
+        
+        logFine( "lookup in classCahce for class {0}", fullClassName );
+        Class ccls = classCache().get(javaClassName);
         if( ccls!=null ){
             logFiner( "loaded class {0} from classCahce",ccls );
             return ccls;
         }
         
-        logFine( "lookup in binCahce for class {0}", name );
-        BinData d = classBinCache().get(name);
+        logFine( "lookup in binCahce for class {0}", fullClassName );
+        BinData d = classBinCache().get(javaClassName);
         if( d!=null ){
-            Class c = defineClass(name, d.getData(), 0, d.getData().length);
+            Class c = defineClass(fullClassName, d.getData(), 0, d.getData().length);
             if( c!=null ){
-                putClassCacheFromBinCache( name, c, name, d );
+                putClassCacheFromBinCache( javaClassName, c, javaClassName, d );
                 logFiner( "loaded class {0} from binCahce",c );
                 return c;
             }
         }
         
-        logFine("load class ({0}) from super class loader", name);
-        Class c = super.loadClass(name);
+        logFine("load class ({0}) from super class loader", fullClassName);
+        Class c = super.loadClass(fullClassName);
         if( c!=null ){
             logFiner("loaded class ({0}) from super class loader", c);
             return c;
         }
 //        
-        throw new ClassNotFoundException("class "+name+" not found");
+        throw new ClassNotFoundException("class "+fullClassName+" not found");
     }
 }

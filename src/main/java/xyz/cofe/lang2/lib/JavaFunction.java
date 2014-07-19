@@ -24,18 +24,14 @@
 package xyz.cofe.lang2.lib;
 
 
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import xyz.cofe.lang2.cli.DynamicClassLoader;
 import xyz.cofe.lang2.vm.Callable;
-import xyz.cofe.lang2.vm.err.CastError;
 import xyz.cofe.lang2.vm.jre.CallConstructorVariant;
 
 /**
@@ -77,6 +73,8 @@ public class JavaFunction extends HashMap implements Callable
     private ClassLoader cl = null;
     private Set<URL> classpath = null;
     private String comment = null;
+    private JavaTypeFunction javaTypeFunction = null;
+    private ImplementFunction implementFunction = null;
 
     public JavaFunction(String comment){
         if( comment==null )comment =  "no comments";
@@ -86,58 +84,35 @@ public class JavaFunction extends HashMap implements Callable
 //        put( "classpath", classpathField );
 //
 //        classpathField.put("add", addClassPathURLFun);
+        
+        javaTypeFunction = new JavaTypeFunction();
+        put(getJavaTypeFunctionName(), javaTypeFunction);
+        
+        implementFunction = new ImplementFunction();
+        put(getImplementFunctionName(), implementFunction);
     }
+    
+    public String getJavaTypeFunctionName(){ return "type"; }
+    public JavaTypeFunction getJavaTypeFunction(){ return javaTypeFunction; }
+    
+    public String getImplementFunctionName(){ return "implement"; }
+    public ImplementFunction getImplementFunction(){ return implementFunction; }
     
     public String getComment(){ return comment; }
 
-//    private Set<URL> classpath(){
-//        if( classpath==null )classpath = new HashSet<URL>();
-//        return classpath;
-//    }
-//
-//    private void addClassPathURL(URL classPathURL){
-//        if( classPathURL==null )throw new IllegalArgumentException( "classPathURL==null" );
-//        classpath().add(classPathURL);
-//        cl = null;
-//    }
-//
-//    private final Callable addClassPathURLFun = new Callable() {
-//        @Override
-//        public Object call(Object... arguments) {
-//            if( arguments!=null ){
-//                for( Object arg : arguments ){
-//                    if( arg instanceof String ){
-//                        try {
-//                            URL url = new URL((String) arg);
-//                            addClassPathURL(url);
-//                        } catch (MalformedURLException ex) {
-//                            throw new RuntimeException(ex);
-//                        }
-//                    }else if( arg instanceof URL ){
-//                        URL url = (URL)arg;
-//                        addClassPathURL(url);
-//                    }else{
-//                        throw new CastError("can't add as url "+arg);
-//                    }
-//                }
-//            }
-//            return null;
-//        }
-//    };
-//
-//    private ClassLoader cl(){
-//        if( cl!=null )return cl;
-//
-//        Set<URL> cp = classpath();
-//        if( cp.isEmpty() )return null;
-//
-//        cl = new URLClassLoader(classpath().toArray(new URL[]{}), this.getClass().getClassLoader());
-//        return cl;
-//    }
-    
     public ClassLoader getClassLoader(){ return cl; }
     public void setClassLoader( ClassLoader cl ){
         this.cl = cl;
+        if( javaTypeFunction!=null ){
+            javaTypeFunction.setTypeClassLoader(cl);
+        }
+        if( implementFunction!=null ){
+            implementFunction.setCompileTimeClassLoader(cl);
+        }
+        if( cl instanceof DynamicClassLoader ){
+            DynamicClassLoader dcl = (DynamicClassLoader)cl;
+            implementFunction.setClassCache(dcl.getClassCacheMap());
+        }
     }
 
     @Override

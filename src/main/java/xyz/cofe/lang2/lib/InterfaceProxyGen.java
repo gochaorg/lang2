@@ -21,9 +21,10 @@
  * ПРИЧИНОЙ ИЛИ СВЯЗАННЫМ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ ИЛИ ИСПОЛЬЗОВАНИЕМ ПРОГРАММНОГО ОБЕСПЕЧЕНИЯ 
  * ИЛИ ИНЫМИ ДЕЙСТВИЯМИ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ.
  */
-package xyz.cofe.lang2.vm.jre;
+package xyz.cofe.lang2.lib;
 
 
+import xyz.cofe.common.JavaClassName;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
@@ -32,11 +33,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import xyz.cofe.collection.Iterators;
-import xyz.cofe.jdk.ByteCode;
-import xyz.cofe.jdk.JDKCompiler;
-import xyz.cofe.jdk.SourceCode;
-import xyz.cofe.jvm.MemoryJavaSource;
+import xyz.cofe.lang2.vm.Callable;
 import xyz.cofe.text.IndentStackWriter;
 import xyz.cofe.text.Text;
 import xyz.cofe.types.SimpleTypes;
@@ -77,8 +74,6 @@ public class InterfaceProxyGen {
     //</editor-fold>
     
     protected Class interfaceClass = null;
-    protected String packageName = null;
-    protected String className = null;
 
     public Class getInterfaceClass() {
         return interfaceClass;
@@ -87,38 +82,23 @@ public class InterfaceProxyGen {
     public void setInterfaceClass(Class interfaceClass) {
         this.interfaceClass = interfaceClass;
     }
-
-    public String getPackageName() {
-        return packageName;
-    }
-
-    public void setPackageName(String packageName) {
-        this.packageName = packageName;
-    }
-
-    public String getClassName() {
-        return className;
-    }
-
-    public void setClassName(String className) {
-        this.className = className;
-    }
     
-//    protected ClassLoader compileClassLoader = null;
-//
-//    public ClassLoader getCompileClassLoader() {
-//        return compileClassLoader;
-//    }
-//
-//    public synchronized void setCompileClassLoader(ClassLoader compileClassLoader) {
-//        this.compileClassLoader = compileClassLoader;
-////        this.compiler = null;
-//    }
+    private JavaClassName javaClassName = null;
+
+    public JavaClassName getJavaClassName() {
+        if( javaClassName==null ){
+            javaClassName = new JavaClassName();
+        }
+        return javaClassName;
+    }
+
+    public void setJavaClassName(JavaClassName className) {
+        this.javaClassName = className;
+    }
     
     public synchronized String generate(){
         if( interfaceClass==null )throw new IllegalArgumentException( "interfaceClass==null" );
-        if( packageName==null )throw new IllegalArgumentException( "packageName==null" );
-        if( className==null )throw new IllegalArgumentException( "className==null" );
+        if( getJavaClassName().getClassName()==null )throw new IllegalArgumentException( "className.className==null" );
         
         StringWriter strw = new StringWriter();
         IndentStackWriter out = new IndentStackWriter(strw);
@@ -145,6 +125,9 @@ public class InterfaceProxyGen {
         out.templateln("   Генерация реализации интерфейса {0}", interfaceClass.getName());
         out.println("*/");
         out.println("");
+        
+        String packageName = getJavaClassName().getPackageName();
+        String className = getJavaClassName().getClassName();
 
         if( packageName!=null && packageName.length()>0 ){
             out.templateln("package {0};", packageName);
@@ -231,7 +214,7 @@ public class InterfaceProxyGen {
         List<Param> params ){
         
         String methodName = m.getName();
-        String callableType = "lang2.vm.Callable";
+        String callableType = Callable.class.getName();
         
         String args = "";
         int argsIdx = -1;
@@ -262,8 +245,42 @@ public class InterfaceProxyGen {
         Class retType ){
         
         String methodName = m.getName();
-        String callableType = "lang2.vm.Callable";
+        String callableType = Callable.class.getName();
         String retTypeName = retType.getName();
+        
+        String defaultValue = "("+retTypeName+")null";
+        String convertResult = "("+retTypeName+")";
+        
+        if( SimpleTypes.isSimple(retType) ){
+            if( !SimpleTypes.isNullable(retType) ){
+                if( SimpleTypes.isBoolean(retType) ){
+                    defaultValue = "(boolean)false";
+                    Object v = null;
+                    convertResult = "(boolean)(Boolean)";
+                }else if( SimpleTypes.isByte(retType) ){
+                    defaultValue = "(byte)0";
+                    convertResult = "(byte)(Byte)0";
+                }else if( SimpleTypes.isShort(retType) ){
+                    defaultValue = "short";
+                    convertResult = "(short)(Short)";
+                }else if( SimpleTypes.isInt(retType) ){
+                    defaultValue = "(int)0";
+                    convertResult = "(int)(Integer)";
+                }else if( SimpleTypes.isLong(retType) ){
+                    defaultValue = "(long)0";
+                    convertResult = "(long)(Long)";
+                }else if( SimpleTypes.isFloat(retType) ){
+                    defaultValue = "(float)0";
+                    convertResult = "(float)(Float)";
+                }else if( SimpleTypes.isDouble(retType) ){
+                    defaultValue = "(double)0";
+                    convertResult = "(double)(Double)";
+                }else if( SimpleTypes.isChar(retType) ){
+                    defaultValue = "(char)0";
+                    convertResult = "(char)(Character)";
+                }
+            }
+        }
         
         String args = "";
         int argsIdx = -1;
@@ -275,58 +292,16 @@ public class InterfaceProxyGen {
 
         out.templateln("Object res = null;");
         out.println("");
-        out.templateln("if( this.{0} == null ) return ({1})res;", ownerVar, retTypeName);
+        out.templateln("if( this.{0} == null ) return {1};", ownerVar, defaultValue);
         out.println("");
         out.templateln("Object method = {0}.get(\"{1}\");", ownerVar, methodName);
         out.templateln("if( !(method instanceof {0}) ){{",callableType);
-        out.templateln("  return ({0})res;",retTypeName);
+        out.templateln("  return {0};",defaultValue);
         out.templateln("}");
         out.println("");
         out.templateln("{0} call = ({0})method;",callableType);
         out.templateln("res = call.call({0});",args);
-        out.templateln("return ({0})res;", retTypeName);
+        
+        out.templateln("return {0}res;", convertResult);
     }
-    
-    public String getFullClassName(){
-        String pkg = getPackageName();
-        String clsName = getClassName();
-        String fullClsName = (pkg!=null && pkg.length()>0) ? Text.trimEnd(pkg, ".") + "." + clsName : clsName;
-        return fullClsName;
-    }
-    
-//    public synchronized List<SourceCode> generateSources(){
-//        List<SourceCode> sources = new ArrayList<SourceCode>();
-//        String src = generate();
-//        String cname = getFullClassName();
-//        SourceCode sc = new MemoryJavaSource(cname, src);
-//        sources.add(sc);
-//        return sources;
-//    }
-//    
-//    private org.gocha.jdk.Compiler compiler = null;
-//    public org.gocha.jdk.Compiler compiler(){
-//        if( compiler!=null )return compiler;
-//        if( compileClassLoader!=null ){
-//            compiler = new JaninoCompiler(compileClassLoader);
-//        }else{
-//            compiler = new JaninoCompiler();
-//        }
-////        compiler = new JDKCompiler();
-//        return compiler;
-//    }
-    
-//    public synchronized List<ByteCode> compileSources(){
-//        List<ByteCode> res = new ArrayList<ByteCode>();
-//        List<SourceCode> sources = generateSources();
-//        Iterable<? extends ByteCode> compiled = compiler().compile(sources);
-//        if( compiled!=null ){
-//            List l = Iterators.asList(compiled);
-//            for( Object o : l ){
-//                if( o instanceof ByteCode ){
-//                    res.add( (ByteCode)o );
-//                }
-//            }
-//        }
-//        return res;
-//    }
 }

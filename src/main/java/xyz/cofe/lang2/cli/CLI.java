@@ -1712,8 +1712,8 @@ public class CLI
             cliFunctions = new CLIFunctions(engine);
         }
         
-        if( dyncl!=null && cliFunctions.java!=null ){
-            cliFunctions.java.setClassLoader(dyncl);
+        if( dyncl!=null ){
+            cliFunctions.getJavaFunction().setClassLoader(dyncl);
         }
         
         cliFunctions.getListeners().add(new CLIFunctions.Adapter(){

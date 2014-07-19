@@ -330,7 +330,7 @@ public class CLIFunctions {
         memObjects.put("typeof", typeof);
         memObjects.put("eval", eval);
         memObjects.put("help", help);
-        memObjects.put("java", java);
+        memObjects.put("java", getJavaFunction());
         memObjects.put("evalFile", evalFile);
         memObjects.put("desc", desc());
         return memObjects;
@@ -783,7 +783,12 @@ public class CLIFunctions {
     /**
      * Создает объект java
      */
-    public JavaFunction java = new JavaFunction( funHelp("java") );
+    private JavaFunction java = new JavaFunction( funHelp("java") );
+    public JavaFunction getJavaFunction(){
+        if( java!=null )return java;
+        java = new JavaFunction( funHelp("java") );
+        return java;
+    }
     //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="desc()">
