@@ -4,7 +4,7 @@
     <groupId>xyz.cofe</groupId>
     <artifactId>lang2</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
     <dependencies>
         <dependency>
             <groupId>org.antlr</groupId>
@@ -41,6 +41,12 @@
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>buildnumber-maven-plugin</artifactId>
             <version>1.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <version>4.3.0</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
     <properties>
@@ -147,6 +153,17 @@
                             <id>lang2</id>
                         </program>
                     </programs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.3.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-Activator>xyz.cofe.lang2.osgi.Activator</Bundle-Activator>
+                    </instructions>
                 </configuration>
             </plugin>
         </plugins>
