@@ -1,0 +1,29 @@
+var button = function( text, click ){
+	var swingButton = java( "javax.swing.JButton" );
+	swingButton.text = text;
+	
+	var proxy = { 
+		actionPerformed : function( self, e ){ 
+			click( e );
+		} 
+	};
+	
+	var implButListener = java.implement( java.type( "java.awt.event.ActionListener" ), proxy );
+	
+	swingButton.addActionListener( implButListener );
+	
+	return { 
+		swingButton : swingButton, 
+		proxy : proxy, 
+		listener : implButListener,
+		addTo : function( self, cont ){
+			if( cont.getClass().isAssignableFrom( java.type("javax.swing.JFrame" ) ) ){
+				cont.contentPane.add( self.swingButton );
+			}else{
+				cont.add( self.swingButton );
+			}
+			cont.revalidate();
+		}
+	};
+};
+

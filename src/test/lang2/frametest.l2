@@ -1,0 +1,17 @@
+evalFile( "swingButton.l2" );
+
+var frame = java("javax.swing.JFrame");
+frame.visible = true;
+frame.title = "sample lang2";
+frame.setSize( 400,400 );
+frame.setLocation( 50, 50 );
+
+var gridBagLayout = java("java.awt.GridBagLayout");
+frame.contentPane.layout = gridBagLayout;
+
+var helloButton = button( "Hello", function(){ println( "hello button clicked" ) } );
+helloButton.addTo( frame );
+
+var exitButton = button( "Exit", function(){ exit(0) } );
+exitButton.addTo( frame );
+
