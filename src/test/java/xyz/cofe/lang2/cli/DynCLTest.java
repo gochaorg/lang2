@@ -23,12 +23,7 @@
  */
 package xyz.cofe.lang2.cli;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -58,7 +53,8 @@ public class DynCLTest {
     @Test
     public void test01() {
         CLI.main(new String[]{
-            "--DynamicCL=true"
+            "--CallSystemExit=false"
+            ,"--DynamicCL=true"
             ,"--AddDynCP=/home/user/code/dev/nb74/lang2/test2/lib"
             ,"-e"
             ,"var drv = java(\"oracle.jdbc.OracleDriver\");"

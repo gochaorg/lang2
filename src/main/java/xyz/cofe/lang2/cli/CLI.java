@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -36,9 +35,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import xyz.cofe.close.AutoClose;
 import xyz.cofe.lang2.lib.CLIFunctions;
 import xyz.cofe.lang2.lib.CLIFunctions.Event;
 import xyz.cofe.lang2.parser.BasicParser;
@@ -51,7 +50,6 @@ import xyz.cofe.lang2.vm.Value;
 import xyz.cofe.lang2.vm.op.Const;
 import xyz.cofe.lang2.vm.op.Function;
 import xyz.cofe.collection.Convertor;
-import xyz.cofe.collection.Predicate;
 import xyz.cofe.collection.map.EventMap;
 import xyz.cofe.collection.map.EventMapAdapter;
 import xyz.cofe.files.FileUtil;
@@ -268,6 +266,10 @@ public class CLI
     private UnionWriter startLogWriter = null;
     
     private DynamicClassLoader dyncl = null;
+    
+    public DynamicClassLoader getDynamicClassLoader(){
+        return dyncl;
+    }
     
     //<editor-fold defaultstate="collapsed" desc="log()">
     /**
@@ -719,7 +721,7 @@ public class CLI
 //                            if( rconf!=null ){
 //                                cli.getConfig().putAll(rconf);
 //                            }
-                            cli.getConfig().readFrom(confFile);
+                            cli.getConfig().read(confFile);
                         }
                     }
                 }
@@ -1116,6 +1118,16 @@ public class CLI
             };
         }
         //</editor-fold>
+        
+        private boolean callSystemExit = true;
+
+        public boolean isCallSystemExit() {
+            return callSystemExit;
+        }
+
+        public void setCallSystemExit(boolean callSystemExit) {
+            this.callSystemExit = callSystemExit;
+        }
     }
     
     public synchronized void start(StartOptions _opts){
@@ -1170,25 +1182,34 @@ public class CLI
         // Выключение приветствия
         opts.applySkipHello(CLI.this).run();
         
+        Runnable exitCode = new Runnable() {
+            @Override
+            public void run() {
+                // Запись лога
+                if( isFlushLogOnExit() ){
+                    try {
+                        if( logWriter!=null ){
+                            logWriter.flush();
+                            logWriter.close();
+                        }
+                    } catch (IOException ex) {
+                        Logger.getLogger(CLI.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+        };
+        
+        AutoClose.get().add( exitCode );
+        
         // Переход в интерактивный режим, если  указан
         opts.applyInteractive(CLI.this).run();
 
-        // Запись лога
-        if( isFlushLogOnExit() ){
-            try {
-                if( logWriter!=null ){
-                    logWriter.flush();
-                    logWriter.close();
-                }
-            } catch (IOException ex) {
-                Logger.getLogger(CLI.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        // Код выхода
-        if( exitInteractive && exitInteractiveCode>0 ){
-            System.exit(exitInteractiveCode);
-        }
+//        // Код выхода
+//        if( exitInteractive && exitInteractiveCode>0 ){
+//            if(opts.isCallSystemExit()) System.exit(exitInteractiveCode);
+//        }else{
+//            if(opts.isCallSystemExit()) System.exit(0);
+//        }
     }
     
     public static StartOptions parseStartOptions( final CLI cli, final String[] _args ){
@@ -1203,6 +1224,7 @@ public class CLI
         
         String DYNAMICCL="--DynamicCL=";
         String ADDDYNCP="--AddDynCP=";
+        String CALLSYSEXIT="--CallSystemExit=";
         
         //<editor-fold defaultstate="collapsed" desc="чтение аргументов">
         while( args.size()>0 ){
@@ -1393,6 +1415,14 @@ public class CLI
                 opts.setUserInitScripts(v.equalsIgnoreCase("true"));
                 continue;
             }
+
+            // запускать автоматические скрипты
+            if( arg.startsWith(CALLSYSEXIT) && arg.length()>CALLSYSEXIT.length() ){
+                String v = arg.substring(CALLSYSEXIT.length());
+                opts.setCallSystemExit(v.equalsIgnoreCase("true"));
+                continue;
+            }
+            
             
             //<editor-fold defaultstate="collapsed" desc="класс консоли">
             // класс консоли
@@ -1689,8 +1719,8 @@ public class CLI
         if( dyncl!=null ){
             try {
                 Class cl = dyncl.loadClass(CLIFunctions.class.getName());
-                Constructor constr = cl.getConstructor(L2Engine.class);
-                Object o = constr.newInstance(engine);
+                Constructor constr = cl.getConstructor(L2Engine.class,SimpleConfig.class);
+                Object o = constr.newInstance(engine,getConfig());
                 if( o instanceof CLIFunctions ){
                     cliFunctions = (CLIFunctions)o;
                     loaddef = false;
@@ -1709,7 +1739,7 @@ public class CLI
         }
         
         if( loaddef ){
-            cliFunctions = new CLIFunctions(engine);
+            cliFunctions = new CLIFunctions(engine,getConfig());
         }
         
         if( dyncl!=null ){

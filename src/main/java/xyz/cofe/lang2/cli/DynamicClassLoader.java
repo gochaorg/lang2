@@ -25,6 +25,7 @@ package xyz.cofe.lang2.cli;
 
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -45,8 +46,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import xyz.cofe.collection.Iterators;
 import xyz.cofe.collection.Predicate;
+import xyz.cofe.collection.iterators.TreeWalk;
 import xyz.cofe.common.JavaClassName;
 import xyz.cofe.common.Reciver;
+import xyz.cofe.common.Text;
 import xyz.cofe.files.FileUtil;
 import xyz.cofe.config.SimpleConfig;
 
@@ -165,13 +168,16 @@ public class DynamicClassLoader extends URLClassLoader {
         }
     }
     
+    //<editor-fold defaultstate="collapsed" desc="createJarSearch">
     public static Iterable<File> createJarSearch( File root ){
         Iterable<File> iP = FileUtil.Iterators.walk(root);
         Predicate<File> filter = FileUtil.Predicates.nameMask("*.jar", false, true);
         Iterable<File> iFiltered = FileUtil.Iterators.filter(iP, filter);
         return iFiltered;
     }
+    //</editor-fold>
     
+    //<editor-fold defaultstate="collapsed" desc="createJarSearch_forScriptFile">
     private Iterable<File> createJarSearch_forScriptFile( File scriptFile ){
         Map<String,Object> ctx = new HashMap<String, Object>();
         ctx.put("script", scriptFile);
@@ -194,6 +200,7 @@ public class DynamicClassLoader extends URLClassLoader {
         
         return itr;
     }
+    //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="notify reciver функции">
     public synchronized void evalScriptFile( File file ){
@@ -255,25 +262,53 @@ public class DynamicClassLoader extends URLClassLoader {
 //        classBinCache().remove(binKey);
     }
     
+    //<editor-fold defaultstate="collapsed" desc="BinData">
+    /**
+     * Бинарное представление Java класса
+     */
     public static class BinData {
         protected JavaClassName name = null;
         protected byte[] data = null;
         
         public BinData(String name,byte[] data){
             if( name==null )throw new IllegalArgumentException( "name==null" );
+            if( data==null )throw new IllegalArgumentException( "data==null" );
             this.name = new JavaClassName(name);
             this.data = data;
         }
-
+        
+        public BinData(JavaClassName name,byte[] data){
+            if( name==null )throw new IllegalArgumentException( "name==null" );
+            if( data==null )throw new IllegalArgumentException( "data==null" );
+            this.name = name;
+            this.data = data;
+        }
+        
+        /**
+         * Имя Java класса
+         * @return имя класса
+         */
         public JavaClassName getName() {
             return name;
         }
-
+        
+        /**
+         * Бинарное представление класса
+         * @return Бинарное представление класса
+         */
         public byte[] getData() {
             return data;
         }
     }
+    //</editor-fold>
     
+    /**
+     * Сканирует jar/zip файл на премет java классов
+     * @param file jar Файл
+     * @param jent запакованый файл
+     * @param reciver Приемник java класса
+     * @throws IOException Ошибка IO
+     */
     protected void scanClass( JarFile file, JarEntry jent, Reciver<BinData> reciver ) throws IOException{
         String name = jent.getName();
         
@@ -294,7 +329,7 @@ public class DynamicClassLoader extends URLClassLoader {
     protected List<BinData> scanJarForClasses( File file ){
         final List<BinData> javaClasses = new ArrayList<BinData>();
         
-        logEnter("scanJar( {0} )", file);
+        logEnter("scanJarForClasses( {0} )", file);
         try {
             JarFile jarFile = new JarFile(file);
             Enumeration<JarEntry> entries = jarFile.entries();
@@ -313,14 +348,129 @@ public class DynamicClassLoader extends URLClassLoader {
         } catch (IOException ex) {
             logException(ex);
         }
-        logExit("scanJar");
+        logExit("scanJarForClasses");
         
         return javaClasses;
     }
     
-    protected Set<File> added = new HashSet<File>();
+    protected synchronized List<BinData> scanDirectoryForClasses( File dir ){
+        if( dir==null )throw new IllegalArgumentException( "dir==null" );
+        
+        final List<BinData> javaClasses = new ArrayList<BinData>();
+        logEnter("scanDirectoryForClasses( {0} )", dir);
+        
+        for( TreeWalk<File> twfile : FileUtil.Iterators.walkTW(dir) ){
+            if( twfile==null )continue;
+            if( twfile.currentLevel()<2 )continue;
+            File cfile = twfile.currentNode();
+            if( cfile==null )continue;
+            if( !cfile.getName().toLowerCase().endsWith(".class") )continue;
+
+            List<File> nodePath = Iterators.asList(twfile.nodePath());
+            if( nodePath.size()>2 ){
+                ArrayList<String> nameList = new ArrayList<String>();
+                nodePath.remove(0);
+                for( int ni=0; ni<nodePath.size(); ni++ ){
+                    File nfile = nodePath.get(ni);
+                    String name = nfile.getName();
+                    if( ni==(nodePath.size()-1) ){
+                        if( name.toLowerCase().endsWith(".class") ){
+                            name = name.substring(0, name.length()-6);
+                            nameList.add( name );
+                        }
+                    }
+                }
+                
+                JavaClassName javaClassName = new JavaClassName(Text.join(nameList, "."));
+                
+                FileInputStream fin;
+                try {
+                    fin = new FileInputStream(cfile);
+                    byte[] binData = FileUtil.readAllData(fin,true);
+                    javaClasses.add(new BinData(javaClassName, binData));
+                } catch (IOException ex) {
+                    Logger.getLogger(DynamicClassLoader.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+        
+        logExit("scanDirectoryForClasses");
+        return javaClasses;
+    }
     
-    protected void defineClasses( List<BinData> classes ){
+    protected Set<File> addedJars = new HashSet<File>();
+
+    /**
+     * Возвращает список просканированных jar файлов
+     * @return 
+     */
+    public Set<File> getAddedJars(){
+        HashSet<File> sjars = new HashSet<File>();
+        sjars.addAll(addedJars);
+        return sjars;
+    }
+    
+    /**
+     * Возвращает список просканированных каталогов
+     * @return 
+     */
+    public Set<File> getAddedDirectories(){
+        HashSet<File> sjars = new HashSet<File>();
+        sjars.addAll(addedDirectories);
+        return sjars;
+    }
+    
+    protected Set<File> addedDirectories = new HashSet<File>();
+    
+    public synchronized void addDirectories( File[] directories ){
+        if( directories==null )throw new IllegalArgumentException( "directories==null" );
+        List<BinData> javaClasses = null;
+        for( File dir : directories ){
+            if( dir==null )continue;
+            
+            if( addedDirectories.contains(dir) )continue;
+            addedDirectories.add(dir);
+            
+            List<BinData> jc = scanDirectoryForClasses(dir);
+            if( jc==null )continue;
+            if( jc.isEmpty() )continue;
+            if( javaClasses==null ){
+                javaClasses = jc;
+            }else{
+                javaClasses.addAll( jc );
+            }
+        }
+        defineClasses(javaClasses);
+    }
+    
+    public synchronized void addJar( File file ){
+        if( file==null )throw new IllegalArgumentException( "file==null" );
+        addJars( new File[]{ file } );
+    }
+    
+    public synchronized void addJars( File[] files ){
+        if( files==null )throw new IllegalArgumentException( "files==null" );
+        int co = 0;
+        List<BinData> javaClassess = new ArrayList<BinData>();
+        for( File f : files ){
+            if( f==null )continue;
+            if( f.exists() && !addedJars.contains(f) ){
+                try {
+                    addURL(f.toURI().toURL());
+                    addedJars.add( f );
+                    List<BinData> clsss = scanJarForClasses(f);
+                    javaClassess.addAll(clsss);
+                    co++;
+                    logFine("added classpath {0}", f);
+                } catch (MalformedURLException ex) {
+                    logException(ex);
+                }
+            }
+        }
+        defineClasses(javaClassess);
+    }
+    
+    protected synchronized void defineClasses( List<BinData> classes ){
         for( BinData v : classes ){
             JavaClassName k = v.getName();
             if( classBinCache().containsKey(k) ){
@@ -334,10 +484,10 @@ public class DynamicClassLoader extends URLClassLoader {
         List<BinData> javaClassess = new ArrayList<BinData>();
         for( File f : jars() ){
             if( f==null )continue;
-            if( f.exists() && !added.contains(f) ){
+            if( f.exists() && !addedJars.contains(f) ){
                 try {
                     addURL(f.toURI().toURL());
-                    added.add( f );
+                    addedJars.add( f );
                     List<BinData> clsss = scanJarForClasses(f);
                     javaClassess.addAll(clsss);
                     co++;
