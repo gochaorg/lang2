@@ -22,89 +22,95 @@
  * ИЛИ ИНЫМИ ДЕЙСТВИЯМИ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ.
  */
 
-package xyz.cofe.lang2.vm.err;
+package xyz.cofe.lang2.lib;
 
 
+import java.lang.reflect.Array;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import xyz.cofe.lang2.vm.Callable;
+import xyz.cofe.lang2.vm.err.ClassNotFoundError;
 
 /**
  *
  * @author Kamnev Georgiy (nt.gocha@gmail.com)
  */
-public class ClassNotFoundError extends Error
+public class ArrayFunction 
+implements Callable
 {
     //<editor-fold defaultstate="collapsed" desc="log Функции">
     private static void logFine(String message,Object ... args){
-        Logger.getLogger(ClassNotFoundError.class.getName()).log(Level.FINE, message, args);
+        Logger.getLogger(ArrayFunction.class.getName()).log(Level.FINE, message, args);
     }
     
     private static void logFiner(String message,Object ... args){
-        Logger.getLogger(ClassNotFoundError.class.getName()).log(Level.FINER, message, args);
+        Logger.getLogger(ArrayFunction.class.getName()).log(Level.FINER, message, args);
     }
     
     private static void logFinest(String message,Object ... args){
-        Logger.getLogger(ClassNotFoundError.class.getName()).log(Level.FINEST, message, args);
+        Logger.getLogger(ArrayFunction.class.getName()).log(Level.FINEST, message, args);
     }
     
     private static void logInfo(String message,Object ... args){
-        Logger.getLogger(ClassNotFoundError.class.getName()).log(Level.INFO, message, args);
+        Logger.getLogger(ArrayFunction.class.getName()).log(Level.INFO, message, args);
     }
 
     private static void logWarning(String message,Object ... args){
-        Logger.getLogger(ClassNotFoundError.class.getName()).log(Level.WARNING, message, args);
+        Logger.getLogger(ArrayFunction.class.getName()).log(Level.WARNING, message, args);
     }
     
     private static void logSevere(String message,Object ... args){
-        Logger.getLogger(ClassNotFoundError.class.getName()).log(Level.SEVERE, message, args);
+        Logger.getLogger(ArrayFunction.class.getName()).log(Level.SEVERE, message, args);
     }
 
     private static void logException(Throwable ex){
-        Logger.getLogger(ClassNotFoundError.class.getName()).log(Level.SEVERE, null, ex);
+        Logger.getLogger(ArrayFunction.class.getName()).log(Level.SEVERE, null, ex);
     }
     //</editor-fold>
 
-    /**
-     * Конструктор
-     * @param message сообщение о ошибке
-     */
-    public ClassNotFoundError(ClassNotFoundException message) {
-        super(message.getMessage(), message);
+    private ClassLoader typeClassLoader = null;
+
+    public synchronized ClassLoader getTypeClassLoader() {
+        if( typeClassLoader!=null )return typeClassLoader;
+        typeClassLoader = this.getClass().getClassLoader();
+        return typeClassLoader;
     }
+
+    public synchronized void setTypeClassLoader(ClassLoader typeClassLoader) {
+        this.typeClassLoader = typeClassLoader;
+    }
+
     
-    /**
-     * Конструктор
-     * @param message сообщение о ошибке
-     */
-    public ClassNotFoundError(String message) {
-        super(message);
-    }
-
-    /**
-     * Конструктор
-     * @param source Источник ошибки
-     * @param message сообщение о ошибке
-     */
-    public ClassNotFoundError(Object source,String message) {
-        super(source, message);
-    }
-
-    /**
-     * Конструктор
-     * @param source Источник ошибки
-     * @param message сообщение о ошибке
-     * @param parent ошибка
-     */
-    public ClassNotFoundError(Object source,String message,Throwable parent) {
-		super(source,message,parent);
-    }
-
-    /**
-     * Конструктор
-     * @param message сообщение о ошибке
-     * @param parent ошибка
-     */
-    public ClassNotFoundError(String message,Throwable parent){
-        super(message, parent);
+    @Override
+    public Object call(Object... arguments) {
+        if( arguments==null || arguments.length<2 )return null;
+        if( arguments[0]==null )return null;
+        if( arguments[1]==null )return null;
+        
+        Object arg0 = arguments[0];
+        Object arg1 = arguments[1];
+        
+        Class arrClass = null;
+        if( arg0 instanceof Class ){
+            arrClass = (Class)arg0;
+        }else if( arg0 instanceof String ){
+            try {
+                arrClass = Class.forName(arg0.toString(),true,getTypeClassLoader());
+            } catch (ClassNotFoundException ex) {
+                logException(ex);
+                throw new ClassNotFoundError(ex);
+            }
+        }else{
+            return null;
+        }
+        
+        int count = -1;
+        if( arg1 instanceof Number ){
+            count = ((Number)arg1).intValue();
+        }else{
+            return null;
+        }
+        
+        return Array.newInstance(arrClass, count);
     }
 }

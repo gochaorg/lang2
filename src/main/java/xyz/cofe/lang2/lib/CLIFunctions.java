@@ -100,7 +100,20 @@ public class CLIFunctions {
         }
         this.engine = engine;
     }
-    
+
+    /**
+     * Конструктор
+     * @param engine Движок
+     * @param config Настройки функций
+     */
+    public CLIFunctions(L2Engine engine,SimpleConfig config){
+        if (engine== null) {
+            throw new IllegalArgumentException("engine==null");
+        }
+        this.engine = engine;
+        if( config!=null )this.conf = config.subset("functions.",true,true);
+    }
+        
     //<editor-fold defaultstate="collapsed" desc="scriptReader">
     private ScriptReader scriptReader = null;
     
@@ -351,6 +364,7 @@ public class CLIFunctions {
                 }
             }
             fireEvent(new ExitEvent(CLIFunctions.this, exitCode));
+            System.exit(exitCode);
             return null;
         }
     };
@@ -378,7 +392,7 @@ public class CLIFunctions {
      */
     public void setOutput(Writer output){
         this.output = output;
-        this.endlDetectorWriter.setWriter(output);
+        this.getEndlDetectorWriter().setWriter(output);
     }
     //</editor-fold>
     
@@ -418,7 +432,7 @@ public class CLIFunctions {
         if( _print!=null ){
             return _print;
         }
-        SimpleConfig sc = new SimpleConfig();
+//        SimpleConfig sc = new SimpleConfig();
         _print = new Print(conf().subset("print."));
         return _print;
     }
@@ -432,12 +446,14 @@ public class CLIFunctions {
             for( Object arg : arguments ){
                 try {
                     getOutput().write(getPrint().sprint(arg));
+//                    getEndlDetectorWriter().write(getPrint().sprint(arg));
                 } catch (IOException ex) {
                     fireEvent(new ErrorEvent(CLIFunctions.this, ex));
                 }
             }
             try {
                 getOutput().flush();
+//                getEndlDetectorWriter().flush();
             } catch (IOException ex) {
                 fireEvent(new ErrorEvent(CLIFunctions.this, ex));
             }
@@ -492,13 +508,16 @@ public class CLIFunctions {
             for( Object arg : arguments ){
                 try {
                     getOutput().write(getPrint().sprint(arg));
+//                    getEndlDetectorWriter().write(getPrint().sprint(arg));
                 } catch (IOException ex) {
                     fireEvent(new ErrorEvent(CLIFunctions.this, ex));
                 }
             }
             try {
                 getOutput().write(getEndl());
+//                getEndlDetectorWriter().write(getEndl());
                 getOutput().flush();
+//                getEndlDetectorWriter().flush();
             } catch (IOException ex) {
                 fireEvent(new ErrorEvent(CLIFunctions.this, ex));
             }
@@ -540,8 +559,8 @@ public class CLIFunctions {
     //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="Свойства /lang2/res/functions.xml">
-    private static SimpleConfig conf = null;
-    private static SimpleConfig conf(){
+    private SimpleConfig conf = null;
+    private SimpleConfig conf(){
         if( conf!=null )return conf;
         conf = new SimpleConfig("functions.xml",true);
         return conf;
@@ -691,7 +710,7 @@ public class CLIFunctions {
     };
     //</editor-fold>
 
-    //<editor-fold defaultstate="collapsed" desc="eval()">
+    //<editor-fold defaultstate="collapsed" desc="evalFile()">
     /**
      * Выполнение кода
      */

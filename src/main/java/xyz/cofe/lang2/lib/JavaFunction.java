@@ -75,6 +75,7 @@ public class JavaFunction extends HashMap implements Callable
     private String comment = null;
     private JavaTypeFunction javaTypeFunction = null;
     private ImplementFunction implementFunction = null;
+    private ArrayFunction arrayFunction = null;
 
     public JavaFunction(String comment){
         if( comment==null )comment =  "no comments";
@@ -90,6 +91,9 @@ public class JavaFunction extends HashMap implements Callable
         
         implementFunction = new ImplementFunction();
         put(getImplementFunctionName(), implementFunction);
+        
+        arrayFunction = new ArrayFunction();
+        put(getArrayFunctionName(), arrayFunction);
     }
     
     public String getJavaTypeFunctionName(){ return "type"; }
@@ -97,6 +101,9 @@ public class JavaFunction extends HashMap implements Callable
     
     public String getImplementFunctionName(){ return "implement"; }
     public ImplementFunction getImplementFunction(){ return implementFunction; }
+
+    public String getArrayFunctionName(){ return "array"; }
+    public ArrayFunction getArrayFunction(){ return arrayFunction; }
     
     public String getComment(){ return comment; }
 
@@ -105,6 +112,9 @@ public class JavaFunction extends HashMap implements Callable
         this.cl = cl;
         if( javaTypeFunction!=null ){
             javaTypeFunction.setTypeClassLoader(cl);
+        }
+        if( arrayFunction!=null ){
+            arrayFunction.setTypeClassLoader(cl);
         }
         if( implementFunction!=null ){
             implementFunction.setCompileTimeClassLoader(cl);
