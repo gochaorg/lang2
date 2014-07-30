@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language id="lang2" _name="lang2" version="2.0" _section="Script">
+	<metadata>
+		<property name="mimetypes">text/x-lang2;text/x-lang2-src</property>
+		<property name="globs">*.l2;*.lang2</property>
+		<property name="line-comment-start">//</property>
+		<property name="block-comment-start">/*</property>
+		<property name="block-comment-end">*/</property>
+	</metadata>
+
+	<styles>
+		<style id="comment"         _name="Comment"                  map-to="def:comment"/>
+		<style id="line-comment"    _name="Comment"                  map-to="def:comment"/>
+		<style id="long-comment"    _name="Comment"                  map-to="def:comment"/>
+		<style id="bash-shebang"    _name="Comment"                  map-to="def:shebang"/>
+		<style id="constant"        _name="Constant"                 map-to="def:constant"/>
+		<style id="escape"          _name="Escaped Character"        map-to="def:special-char"/>
+		<style id="null-value"      _name="Null Value"               map-to="def:special-constant"/>
+		<style id="undefined-value" _name="Undefined Value"          map-to="def:special-constant"/>
+		<style id="boolean"         _name="Boolean Value"            map-to="def:boolean"/>
+		<style id="keyword"         _name="Keyword"                  map-to="def:keyword"/>
+		<style id="type"            _name="Data Type"                map-to="def:type"/>
+		<style id="function"        _name="Function"                 map-to="def:builtin"/>
+		<style id="properties"      _name="Properties"               map-to="def:statement"/>
+		<style id="constructors"    _name="Constructors"             map-to="def:type"/>
+		<style id="future-words"    _name="Future Reserved Keywords" map-to="def:error"/>
+		<style id="string"          _name="String"                   map-to="def:string"/>
+		<style id="regex"           _name="Regular Expression"       map-to="def:string"/>
+		<style id="identifier"      _name="Identifier"               map-to="def:identifier"/>
+		<style id="operator"        _name="Operator"               map-to="def:special-char"/>
+	</styles>
+
+	<definitions>
+		<context id="bash-shebang" style-ref="bash-shebang" class="comment" class-disabled="no-spell-check">
+			<start>^\#\!\/</start>
+			<end>\!\#</end>
+		</context>
+
+		<context id="bash-line-comment" style-ref="comment" end-at-line-end="true" class="comment" class-disabled="no-spell-check">
+			<start>^#</start>
+		</context>
+
+		<context id="line-comment" style-ref="comment" end-at-line-end="true" class="comment" class-disabled="no-spell-check">
+			<start>\/\/</start>
+		</context>
+
+		<context id="long-comment" style-ref="comment" class="comment" class-disabled="no-spell-check">
+			<start>\/\*</start>
+			<end>\*\/</end>
+		</context>
+
+		<context id="number-constant" style-ref="constant">
+			<match>[0123456789]+(\p{Zs}*\\.\p{Zs}*[0123456789]+)?</match>
+		</context>
+
+		<context id="string-constant" style-ref="constant">
+			<match>"([^\"\\]|\\[\"\\btnfr\']|\\u[0-9a-fA-F]{4}|\\0[0-7]{1,3})*"</match>
+		</context>
+		
+		<context id="constant" style-ref="constant">
+			<keyword>true</keyword>
+			<keyword>false</keyword>
+			<keyword>null</keyword>
+		</context>
+
+		<context id="operator" style-ref="operator">
+			<match>\!=|==|&lt;&gt;|&gt;=|\&lt;=|&lt;|&gt;|\;|\!|\{|\}|\:|\.|\,|\[|\]|\-|\+|\*|\/|\%|&amp;|\^|\|</match>
+		</context>
+		
+		<context id="keywords" style-ref="keyword">
+			<keyword>if</keyword>
+			<keyword>else</keyword>
+			<keyword>try</keyword>
+			<keyword>catch</keyword>
+			<keyword>throw</keyword>
+			<keyword>var</keyword>
+			<keyword>function</keyword>
+			<keyword>while</keyword>
+			<keyword>break</keyword>
+			<keyword>continue</keyword>
+			<keyword>return</keyword>
+			<keyword>for</keyword>
+			<keyword>in</keyword>
+			<keyword>or</keyword>
+			<keyword>xor</keyword>
+			<keyword>and</keyword>
+			<keyword>not</keyword>
+		</context>
+
+		<context id="identifier" style-ref="identifier">
+			<match>[\p{L}_][\p{L}_0123456789]*</match>
+		</context>
+
+		<context id="lang2" class="no-spell-check">
+			<include>
+				<context ref="bash-shebang"/>
+				<context ref="bash-line-comment"/>
+				<context ref="line-comment"/>
+				<context ref="long-comment"/>
+				<context ref="keywords"/>
+				<context ref="constant"/>
+				<context ref="number-constant" />
+				<context ref="string-constant" />
+				<context ref="identifier"/>
+				<context ref="operator"/>
+			</include>
+		</context>
+	</definitions>
+</language>
