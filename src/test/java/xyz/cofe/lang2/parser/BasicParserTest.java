@@ -544,4 +544,84 @@ public class BasicParserTest extends BaseTest
 //        
 //        assertParseExpressions(code, "15");
     }
+    
+    @Test
+    public void ifNotDefinedVariable(){
+        log.println("Неопределенная переменная");
+        log.println("==========================");
+        
+        String varName = "undefVar";
+        
+        if( memory.containsKey(varName) ){
+            memory.remove(varName);
+        }
+        
+        String code = 
+                "var v1 = 1;\n"
+            +   "if( "+varName+" ){ v1=2 };\n"
+            +   "v1";
+        
+        assertParseExpressions(code, "1");
+
+        code = 
+                "var v1 = 1;\n"
+            +   "if( "+varName+" ){ v1=2 } else { v1=3 }\n"
+            +   "v1";
+        
+        assertParseExpressions(code, "3");
+    }
+
+    @Test
+    public void ifNullCondition(){
+        log.println("Null ссылка в условии if");
+        log.println("==========================");
+        
+        String code = 
+                "var v1 = null;\n"
+            +   "var v2 = 1;\n"
+            +   "if( v1 ){\n"
+            +   "v2 = 2;\n"
+            +   "}else{\n"
+            +   "v2 = 3;\n"
+            +   "}\n"
+            +   "v2";
+        
+        assertParseExpressions(code, "3");
+    }
+
+    @Test
+    public void ifZeroCondition(){
+        log.println("Ноль в условии if");
+        log.println("==========================");
+        
+        String code = 
+                "var v1 = 0;\n"
+            +   "var v2 = 1;\n"
+            +   "if( v1 ){\n"
+            +   "v2 = 2;\n"
+            +   "}else{\n"
+            +   "v2 = 3;\n"
+            +   "}\n"
+            +   "v2";
+        
+        assertParseExpressions(code, "3");
+    }
+
+    @Test
+    public void ifNotBoolCondition(){
+        log.println("Не bool в условии if");
+        log.println("==========================");
+        
+        String code = 
+                "var v1 = \"abc\";\n"
+            +   "var v2 = 1;\n"
+            +   "if( v1 ){\n"
+            +   "v2 = 2;\n"
+            +   "}else{\n"
+            +   "v2 = 3;\n"
+            +   "}\n"
+            +   "v2";
+        
+        assertParseExpressions(code, "2");
+    }
 }

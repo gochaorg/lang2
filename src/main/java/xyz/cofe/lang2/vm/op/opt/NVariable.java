@@ -21,7 +21,7 @@
  * ПРИЧИНОЙ ИЛИ СВЯЗАННЫМ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ ИЛИ ИСПОЛЬЗОВАНИЕМ ПРОГРАММНОГО ОБЕСПЕЧЕНИЯ 
  * ИЛИ ИНЫМИ ДЕЙСТВИЯМИ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ.
  */
-package xyz.cofe.lang2.vm.op;
+package xyz.cofe.lang2.vm.op.opt;
 
 import java.util.Map;
 import java.util.logging.Level;
@@ -30,6 +30,7 @@ import xyz.cofe.lang2.vm.err.CompileException;
 import xyz.cofe.lang2.vm.err.VarNotExistsError;
 import xyz.cofe.lang2.vm.ValuePath;
 import xyz.cofe.collection.Predicate;
+import xyz.cofe.lang2.vm.op.Variable;
 
 /**
  * Значение - переменная.
@@ -79,11 +80,12 @@ public class NVariable extends Variable
      * @param src Образец для копирования
      */
 	public NVariable(Variable src){
-		if (src== null) {			
-			throw new IllegalArgumentException("src==null");
-		}
-		this.memory = src.memory;
-		this.variable = src.variable;
+        super(src);
+//		if (src== null) {			
+//			throw new IllegalArgumentException("src==null");
+//		}
+//		this.memory = src.getMemory();
+//		this.variable = src.getVariable();
 	}
 	
 	/**

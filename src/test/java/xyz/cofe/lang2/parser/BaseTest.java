@@ -86,7 +86,7 @@ public abstract class BaseTest
 		final Factory customFact = createCustomFactory();
 //		if( customFact!=null )parser.setFactory(customFact);
 
-		BasicParser parser = new BasicParser(source,new ParserOptions()){
+		BasicParser parser = new BasicParser(source,new ParserOptions(parserOpts,false)){
             @Override
             public Factory factory() {
                 if( customFact!=null )return customFact;

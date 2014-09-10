@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2014 Kamnev Georgiy (nt.gocha@gmail.com).
@@ -21,112 +21,97 @@
  * ПРИЧИНОЙ ИЛИ СВЯЗАННЫМ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ ИЛИ ИСПОЛЬЗОВАНИЕМ ПРОГРАММНОГО ОБЕСПЕЧЕНИЯ 
  * ИЛИ ИНЫМИ ДЕЙСТВИЯМИ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ.
  */
-package xyz.cofe.lang2.parser;
 
-import java.util.Map;
+package xyz.cofe.lang2.vm.op.opt;
+
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import xyz.cofe.lang2.vm.Method;
-import xyz.cofe.lang2.vm.PythMethod;
+import xyz.cofe.lang2.vm.NullRefError;
 import xyz.cofe.lang2.vm.Value;
-import xyz.cofe.lang2.vm.op.opt.NVariable;
-import xyz.cofe.lang2.vm.op.Variable;
-import xyz.cofe.lang2.vm.op.opt.NIf;
-import xyz.cofe.lang2.vm.op.opt.NIfElse;
+import xyz.cofe.lang2.vm.err.CastError;
+import xyz.cofe.lang2.vm.op.IfElse;
 
 /**
- * @author gocha
+ * Условная конструкция IF.<br/>
+ * Пример: <br/>
+ * <font face="monospaced">
+ * <b>if(</b> <i>Условие</i> <b>)</b> <i>Если верное условие</i> <b>else</b> <i>Если не верное</i><br/>
+ * <b>if(</b> 1 > 2 <b>)</b> "yes" <b>else</b> "no"
+ * </font><br/>
+ * В качестве условия могут выступать булево значения, а так же другие значения:
+ * @author Kamnev Georgiy (nt.gocha@gmail.com)
  */
-public class OptL2Factory extends L2Factory
+public class NIfElse extends IfElse
 {
     //<editor-fold defaultstate="collapsed" desc="log Функции">
     private static void logFine(String message,Object ... args){
-        Logger.getLogger(OptL2Factory.class.getName()).log(Level.FINE, message, args);
+        Logger.getLogger(NIfElse.class.getName()).log(Level.FINE, message, args);
     }
     
     private static void logFiner(String message,Object ... args){
-        Logger.getLogger(OptL2Factory.class.getName()).log(Level.FINER, message, args);
+        Logger.getLogger(NIfElse.class.getName()).log(Level.FINER, message, args);
+    }
+    
+    private static void logFinest(String message,Object ... args){
+        Logger.getLogger(NIfElse.class.getName()).log(Level.FINEST, message, args);
     }
     
     private static void logInfo(String message,Object ... args){
-        Logger.getLogger(OptL2Factory.class.getName()).log(Level.INFO, message, args);
+        Logger.getLogger(NIfElse.class.getName()).log(Level.INFO, message, args);
     }
 
     private static void logWarning(String message,Object ... args){
-        Logger.getLogger(OptL2Factory.class.getName()).log(Level.WARNING, message, args);
+        Logger.getLogger(NIfElse.class.getName()).log(Level.WARNING, message, args);
     }
     
     private static void logSevere(String message,Object ... args){
-        Logger.getLogger(OptL2Factory.class.getName()).log(Level.SEVERE, message, args);
+        Logger.getLogger(NIfElse.class.getName()).log(Level.SEVERE, message, args);
     }
 
     private static void logException(Throwable ex){
-        Logger.getLogger(OptL2Factory.class.getName()).log(Level.SEVERE, null, ex);
+        Logger.getLogger(NIfElse.class.getName()).log(Level.SEVERE, null, ex);
     }
-
     //</editor-fold>
-//    /**
-//     * Конструктор
-//     * @param factory фабрика изначальная
-//     * @param opt Опции парсера/исполнения
-//     */
-//    public OptL2Factory(Factory factory, ParserOptions opt)
-//    {
-//        super(factory);
-//        if (opt== null) {            
-//            throw new IllegalArgumentException("opt==null");
-//        }
-//        this.opt = opt;
-//    }
-    public OptL2Factory(Map<String, Object> memory, ParserOptions opt) {
-        super(memory);
-        if (opt== null) {            
-            throw new IllegalArgumentException("opt==null");
-        }
-        this.opt = opt;
+    
+    public NIfElse(){
     }
     
-    /**
-     * Опции парсера/исполнения
-     */
-    protected ParserOptions opt = null;
-
-    @Override
-    public Value Variable(String id) {
-        Value v = super.Variable(id);
-        if( opt!=null && opt.isCatchNotDefVariableInIf() ){
-            if( v instanceof Variable ){
-                Variable var = (Variable)v;
-                NVariable nv = new NVariable(var);
-                return nv;
-            }
+    public NIfElse(NIfElse src){
+        super(src);
+    }
+    
+    public NIfElse(NIfElse src,boolean deep){
+        super(src,deep);
+        if( deep ){
+            this.nifOptions = src.nifOptions==null ? null : src.nifOptions.clone();
+        }else{
+            this.nifOptions = src.nifOptions;
         }
-        return v;
+    }
+    
+    public NIfElse(Value condition,Value trueExp,Value falseExp){
+        super(condition,trueExp,falseExp);
     }
 
     @Override
-    public Method createMethod(Map obj, xyz.cofe.lang2.vm.op.Function func) {
-        if( opt!=null && opt.isPythonLikeMethod() ){
-            return new PythMethod(obj,func);
-        }
-        return super.createMethod(obj, func);
+    public Value deepClone() {
+        return new NIfElse(this, true);
     }
 
-    @Override
-    public Value If(Value c, Value t, Value f) {
-        NIfElse nifElse = new NIfElse(c, t, f);
-        if( opt!=null ){
-            nifElse.setNifOptions(opt.getIfOptions());
-        }
-        return nifElse;
+    protected NIfOpt nifOptions = null;
+
+    public NIfOpt getNifOptions() {
+        if( nifOptions==null )nifOptions = new NIfOpt();
+        return nifOptions;
     }
 
+    public void setNifOptions(NIfOpt nifOptions) {
+        this.nifOptions = nifOptions;
+    }
+    
     @Override
-    public Value If(Value c, Value t) {
-        NIf nif = new NIf(c, t);
-        if( opt!=null ){
-            nif.setNifOptions(opt.getIfOptions());
-        }
-        return nif;
+    protected boolean evalConditionValue(Value condition) {
+		return getNifOptions().evalConditionValue(condition);
     }
 }

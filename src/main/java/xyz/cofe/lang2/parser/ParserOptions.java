@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import xyz.cofe.collection.Convertor;
 import xyz.cofe.config.SimpleConfig;
+import xyz.cofe.lang2.vm.op.opt.NIfOpt;
 
 /**
  * Опции парсера/исполнения
@@ -68,6 +69,71 @@ public class ParserOptions
     
     public ParserOptions(){
         conf = new SimpleConfig();
+    }
+    
+    public ParserOptions(ParserOptions src,boolean deepCopy){
+        if( src!=null ){
+            if( deepCopy ){
+                if( src.conf!=null ){
+                    conf = new SimpleConfig();
+                    for( String k : src.conf.keySet() ){
+                        String v = src.conf.get(k);
+                        String cmt = src.conf.getComments().get(k);
+                        String type = src.conf.getTypes().get(k);
+                        if( v!=null ){
+                            conf.put(k, v);
+                            if( cmt!=null ){
+                                conf.getComments().put(k, cmt);
+                            }
+                            if( type!=null ){
+                                conf.getTypes().put(k, type);
+                            }
+                        }
+                    }
+                }else{
+                    conf = new SimpleConfig();
+                }
+                storeProperties = src.storeProperties;
+                cl = src.cl;
+                catchNotDefVariableInIf = src.catchNotDefVariableInIf;
+                ifOptions = src.ifOptions!=null ? src.ifOptions.clone() : ifOptions;
+                ifNullAs = src.ifNullAs;
+                ifZeroAs = src.ifZeroAs;
+                ifNotBooleanAs = src.ifNotBooleanAs;
+                pythMethod = src.pythMethod;
+                
+                javaTypeExtFields = new ArrayList<JavaTypeExtField>();
+                if( src.javaTypeExtFields!=null ){
+                    for( JavaTypeExtField ef : src.javaTypeExtFields ){
+                        javaTypeExtFields.add(ef.clone());
+                    }
+                }
+            }else{
+                conf = src.conf;
+                storeProperties = src.storeProperties;
+                cl = src.cl;
+                catchNotDefVariableInIf = src.catchNotDefVariableInIf;
+                ifOptions = src.ifOptions;
+                ifNullAs = src.ifNullAs;
+                ifZeroAs = src.ifZeroAs;
+                ifNotBooleanAs = src.ifNotBooleanAs;
+                pythMethod = src.pythMethod;
+                
+                javaTypeExtFields = new ArrayList<JavaTypeExtField>();
+                if( src.javaTypeExtFields!=null ){
+                    for( JavaTypeExtField ef : src.javaTypeExtFields ){
+                        javaTypeExtFields.add(ef);
+                    }
+                }
+            }
+        }else{
+            conf = new SimpleConfig();
+        }
+    }
+    
+    @Override
+    public ParserOptions clone(){
+        return new ParserOptions(this,true);
     }
 
     public ParserOptions(SimpleConfig config){
@@ -115,6 +181,129 @@ public class ParserOptions
             conf.set("catchNotDefVariableInIf",catchNotDefVariableInIf);
         }
     }
+    //</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="ifOptions">
+    //<editor-fold defaultstate="collapsed" desc="ifOptions">
+    /**
+     * Поведение оператора if / if else
+     */
+    private NIfOpt ifOptions = null;
+    
+    public NIfOpt getIfOptions(){
+        if( ifOptions!=null ){
+            return ifOptions;
+        }
+        ifOptions = new NIfOpt();
+        
+        String nullAs = getIfNullAs();
+        if( nullAs!=null ){
+            if( nullAs.equalsIgnoreCase("exception") ){
+                ifOptions.setNullAs(NIfOpt.CastAs.CastException);
+            }else if( nullAs.equalsIgnoreCase("false") ){
+                ifOptions.setNullAs(NIfOpt.CastAs.False);
+            }else if( nullAs.equalsIgnoreCase("true") ){
+                ifOptions.setNullAs(NIfOpt.CastAs.True);
+            }
+        }
+        
+        String zeroAs = getIfZeroAs();
+        if( zeroAs!=null ){
+            if( zeroAs.equalsIgnoreCase("exception") ){
+                ifOptions.setZeroAs(NIfOpt.CastAs.CastException);
+            }else if( zeroAs.equalsIgnoreCase("false") ){
+                ifOptions.setZeroAs(NIfOpt.CastAs.False);
+            }else if( zeroAs.equalsIgnoreCase("true") ){
+                ifOptions.setZeroAs(NIfOpt.CastAs.True);
+            }
+        }
+        
+        String notBoolAs = getIfNotBooleanAs();
+        if( notBoolAs!=null ){
+            if( notBoolAs.equalsIgnoreCase("exception") ){
+                ifOptions.setNotBooleanAs(NIfOpt.CastAs.CastException);
+            }else if( notBoolAs.equalsIgnoreCase("false") ){
+                ifOptions.setNotBooleanAs(NIfOpt.CastAs.False);
+            }else if( notBoolAs.equalsIgnoreCase("true") ){
+                ifOptions.setNotBooleanAs(NIfOpt.CastAs.True);
+            }
+        }
+        
+        return ifOptions;
+    }
+    //</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="ifNullAs">
+    private String ifNullAs = null; //false;
+    
+    public String getIfNullAs() {
+        if( ifNullAs!=null )return ifNullAs;
+        ifNullAs = conf.get(
+            "ifNullAs","false",
+            "Поведение if при не bool условии, при null:\n"
+                +   "exception - генерировать исключение\n"
+                +   "false     - возвращать false\n"
+                +   "true      - возвращать true\n"
+        );
+        return ifNullAs;
+    }
+    
+    public void setIfNullAs(String nullAs) {
+        this.ifNullAs = nullAs;
+        this.ifOptions = null;
+        if( storeProperties ){
+            conf.set("ifNullAs",nullAs);
+        }
+    }
+    //</editor-fold>
+
+    //<editor-fold defaultstate="collapsed" desc="ifZeroAs">
+    private String ifZeroAs = null; //false;
+    
+    public String getIfZeroAs() {
+        if( ifZeroAs!=null )return ifZeroAs;
+        ifZeroAs = conf.get(
+            "ifZeroAs","false",
+            "Поведение if при не bool условии, при нуле:\n"
+                +   "exception - генерировать исключение\n"
+                +   "false     - возвращать false\n"
+                +   "true      - возвращать true\n"
+        );
+        return ifZeroAs;
+    }
+    
+    public void setIfZeroAs(String zeroAs) {
+        this.ifZeroAs = zeroAs;
+        this.ifOptions = null;
+        if( storeProperties ){
+            conf.set("ifZeroAs",zeroAs);
+        }
+    }
+    //</editor-fold>
+
+    //<editor-fold defaultstate="collapsed" desc="ifNotBooleanAs">
+    private String ifNotBooleanAs = null; //true;
+    
+    public String getIfNotBooleanAs() {
+        if( ifNotBooleanAs!=null )return ifNotBooleanAs;
+        ifNotBooleanAs = conf.get(
+            "ifNotBooleanAs","true",
+            "Поведение if при не bool условии, при других вариантах:\n"
+                +   "exception - генерировать исключение\n"
+                +   "false     - возвращать false\n"
+                +   "true      - возвращать true\n"
+        );
+        return ifNotBooleanAs;
+    }
+    
+    public void setIfNotBooleanAs(String notBooleanAs) {
+        this.ifNotBooleanAs = notBooleanAs;
+        this.ifOptions = null;
+        if( storeProperties ){
+            conf.set("ifNotBooleanAs",notBooleanAs);
+        }
+    }
+    //</editor-fold>
     //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="pythMethod">
@@ -352,6 +541,27 @@ public class ParserOptions
             this.type = type;
             this.fieldName = fieldName;
             this.fieldValue = fieldValue;
+        }
+        
+        /**
+         * Конструктор копирования
+         * @param src образец
+         */
+        public JavaTypeExtField(JavaTypeExtField src){
+            if( src!=null ){
+                this.type = src.type;
+                this.fieldName = src.fieldName;
+                this.fieldValue = src.fieldValue;
+            }
+        }
+        
+        /**
+         * Клонирование объекта
+         * @return клонированный объект
+         */
+        @Override
+        public JavaTypeExtField clone(){
+            return new JavaTypeExtField(this);
         }
         
         /**

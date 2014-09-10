@@ -156,6 +156,26 @@ public class If extends AbstractTreeNode<Value> implements Value
 	}
 
     /**
+     * Вычисление условия
+     * @param condition условие
+     * @return true - условие истинно / false - ложно
+     */
+    protected boolean evalConditionValue( Value condition ){
+		Object c = condition.evaluate();
+		if( c==null ){
+            Logger.getLogger(IfElse.class.getName()).severe("condition.evaluate()==null");
+            throw new NullRefError(this, "condition is null");
+		}
+//        if( c==null )c=(Boolean)false;
+		if( !(c instanceof Boolean) ){
+            Logger.getLogger(IfElse.class.getName()).severe("!(condition.evaluate() instanceof Boolean)");
+            throw new CastError(this, "can't cast to boolean from condition ("+c.getClass().getName()+")");
+		}
+        
+        return (Boolean)c;
+    }
+    
+    /**
      * Вычисляет значение условия, и если оно верное/не верное, то возвращает соответ. значение выражение
      * @return Значение
      */
@@ -170,17 +190,7 @@ public class If extends AbstractTreeNode<Value> implements Value
             Logger.getLogger(If.class.getName()).severe("trueExpression==null");
             throw new CompileException(this,"trueExpression==null");
         }
-		Object c = condition.evaluate();
-		if( c==null ){
-            Logger.getLogger(If.class.getName()).severe("condition.evaluate()==null");
-            throw new NullRefError(this, "condition is null");
-		}
-//        if( c==null )c=(Boolean)false;
-		if( !(c instanceof Boolean) ){
-            Logger.getLogger(If.class.getName()).severe("!(condition.evaluate() instanceof Boolean)");
-            throw new CastError(this, "can't cast to boolean from condition ("+c.getClass().getName()+")");
-		}
-		if( ((Boolean)c) ){
+		if( evalConditionValue(condition) ){
 			r = trueExpression.evaluate();
 		}
 		return r;
