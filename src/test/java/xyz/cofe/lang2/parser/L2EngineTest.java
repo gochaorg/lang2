@@ -175,4 +175,121 @@ public class L2EngineTest extends BasicParserTest
         code = "hello.comment";
         assertParseExpressions(code, "return hello");
     }
+    
+    @Test
+    public void testDebugSourcePos(){
+        log.println("Расположение в исходнике не известной переменной");
+        log.println("================================================");
+        log.flush();
+        
+        String varname = "undefVar";
+        if( memory.containsKey(varname) ){
+            memory.remove(varname);
+        }
+        
+        String code = 
+            "var err = null;\n"
+            + "try {\n"
+            + varname + " = 1;\n"
+            + "} catch( e ) {\n"
+            + "err = e;\n"
+            + "}\n"
+            + "err";
+        
+        log.println("Исходный код:");
+        log.println(code);
+        log.flush();
+        
+        log.println("Выполнение");
+        log.flush();
+        
+        Value v = parseExpressions(code);
+        if( v==null )fail("Исходный код не проанализирован");
+        
+        Object res = v.evaluate();
+        assertTrue(res!=null);
+
+        log.println( "Результат:" );
+        log.println( res );
+        log.flush();
+        
+        assertTrue(res instanceof xyz.cofe.lang2.vm.err.Error);
+        
+        xyz.cofe.lang2.vm.err.Error err = (xyz.cofe.lang2.vm.err.Error)res;
+        assertTrue(err.getSourceLineStartIndex()==2);
+    }
+
+    @Test
+    public void testArrayIndex(){
+        log.println("Доступ к несуществующему полю объекта");
+        log.println("=====================================");
+        log.flush();
+        
+        String code = 
+            "var err = null;\n"
+            + "try {\n"
+            + "var obj = { a : 1, b : 2 };\n"
+            + "obj.c;\n"
+            + "} catch( e ) {\n"
+            + "err = e;\n"
+            + "}\n"
+            + "err";
+        
+        log.println("Исходный код:");
+        log.println(code);
+        log.flush();
+        
+        log.println("Выполнение");
+        log.flush();
+        
+        Value v = parseExpressions(code);
+        if( v==null )fail("Исходный код не проанализирован");
+        
+        Object res = v.evaluate();
+        assertTrue(res!=null);
+
+        log.println( "Результат:" );
+        log.println( res );
+        log.flush();
+        
+        assertTrue(res instanceof xyz.cofe.lang2.vm.err.Error);
+    }
+
+//    @Test
+    public void testIfArrayIndex(){
+        log.println("Доступ к несуществующему полю объекта в контексте if");
+        log.println("====================================================");
+        log.flush();
+        
+        String code = 
+            "var err = null;\n"
+            + "try {\n"
+            + "  var obj = { a : 1, b : 2 };\n"
+            + "  if( obj.c ){\n"
+            + "  } else {\n"
+            + "  };\n"
+            + "} catch( e ) {\n"
+            + "  err = e;\n"
+            + "}\n"
+            + "err";
+        
+        log.println("Исходный код:");
+        log.println(code);
+        log.flush();
+        
+        log.println("Выполнение");
+        log.flush();
+        
+        Value v = parseExpressions(code);
+        if( v==null )fail("Исходный код не проанализирован");
+        
+        Object res = v.evaluate();
+        assertTrue(res!=null);
+
+        log.println( "Результат:" );
+        log.println( res );
+        log.flush();
+        
+        assertTrue(res instanceof xyz.cofe.lang2.vm.err.Error);
+    }
 }
