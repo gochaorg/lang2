@@ -23,6 +23,10 @@
  */
 package xyz.cofe.lang2.vm.err;
 
+import org.antlr.runtime.Token;
+import xyz.cofe.lang2.vm.SourceRange;
+import xyz.cofe.lang2.vm.Value;
+
 /**
  * Ошибка VM
  * @author gocha
@@ -45,6 +49,20 @@ public class Error extends java.lang.Error
     public Error(Object source,String message) {
         super(message);
         this.source = source;
+
+        SourceRange srcRange = null;
+        if( source instanceof Value ){
+            Value v = (Value)source;
+            if( source instanceof SourceRange ){
+                srcRange = (SourceRange)v;
+            }else if( v.getParent() instanceof SourceRange ){
+                srcRange = (SourceRange)v.getParent();
+            }
+
+            if( srcRange!=null ){
+                this.sourceCode = srcRange;
+            }
+        }
     }
 
     /**
@@ -56,6 +74,20 @@ public class Error extends java.lang.Error
     public Error(Object source,String message,Throwable parent) {
         super(message,parent);
         this.source = source;
+        
+        SourceRange srcRange = null;
+        if( source instanceof Value ){
+            Value v = (Value)source;
+            if( source instanceof SourceRange ){
+                srcRange = (SourceRange)v;
+            }else if( v.getParent() instanceof SourceRange ){
+                srcRange = (SourceRange)v.getParent();
+            }
+
+            if( srcRange!=null ){
+                this.sourceCode = srcRange;
+            }
+        }
     }
 
     protected Object source = null;
@@ -67,7 +99,50 @@ public class Error extends java.lang.Error
     public Object getSource(){
         return source;
     }
+    
+    protected SourceRange sourceCode = null;
 
+    /**
+     * Указывает на расположение в исходном коде
+     * @return расположение в исходном коде или null
+     */
+    public SourceRange getSourceCodeRange() {
+        return sourceCode;
+    }
+    
+    /**
+     * Возвращает индекс (от 0) строки в исходном коде
+     * @return Индекс строки или -1
+     */
+    public int getSourceLineStartIndex(){
+        if( sourceCode!=null ){
+            Token t = sourceCode.getStart();
+            if( t!=null )return t.getLine() - 1;
+        }
+        return -1;
+    }
+
+    /**
+     * Возвращает индекс (от 0) символа в начальной строке исходного кода
+     * @return Индекс символа или -1
+     */
+    public int getSourceCharStartIndex(){
+        if( sourceCode!=null ){
+            Token t = sourceCode.getStart();
+            if( t!=null )return t.getCharPositionInLine() - 1;
+        }
+        return -1;
+    }
+    
+    public String getSourceCodeText() {
+        if( sourceCode==null )return null;
+        
+        Token tStart = sourceCode.getStart();
+        if( tStart==null )return null;
+        
+        return tStart.getText();
+    }
+    
     /**
      * Конструктор
      * @param message сообщение о ошибке

@@ -23,82 +23,33 @@
  */
 package xyz.cofe.lang2.vm.err;
 
-import xyz.cofe.lang2.vm.Value;
-import xyz.cofe.lang2.vm.op.DebugWrapperValue;
-import org.antlr.runtime.Token;
-import xyz.cofe.lang2.vm.SourceRange;
-
 /**
- * Ошибка периода исполнения
+ * Ислючение - не определенная переменая
  * @author gocha
  */
-public class RuntimeError extends Error
-{
+public class IndexOutOfArrayError extends RuntimeError {
     /**
      * Конструктор
-     * @param message Сообщение
+     * @param message сообщение о ошибке
      */
-    public RuntimeError(String message){
+    public IndexOutOfArrayError(String message) {
         super(message);
     }
-    
+
     /**
      * Конструктор
-     * @param source Источник ошибки
-     * @param message Сообщение
+     * @param message сообщение о ошибке
      */
-    public RuntimeError(Object source,String message){
-        super(source, message+getDebugInfo(source));
+    public IndexOutOfArrayError(Object source,String message) {
+        super(source,message);
     }
-    
+
     /**
      * Конструктор
-     * @param source Источник ошибки
-     * @param message Сообщение
-     * @param parent Вложенная ошибка
+     * @param message сообщение о ошибке
+     * @param parent ошибка
      */
-    public RuntimeError(Object source,String message,Throwable parent){
-        super(source, message+getDebugInfo(source), parent);
-    }
-    
-    /**
-     * Конструктор
-     * @param message Источник ошибки
-     * @param parent Вложенная ошибка
-     */
-    public RuntimeError(String message,Throwable parent){
+    public IndexOutOfArrayError(String message,Throwable parent){
         super(message, parent);
-    }
-    
-    /**
-     * Возвращает информацию для отладки
-     * @param source Источник сообщения
-     * @return Информация
-     */
-    protected static String getDebugInfo(Object source){
-        if( source instanceof Value ){
-            Value v = (Value)source;
-            
-            SourceRange debug = null;
-            if( v instanceof SourceRange ){
-                debug = (SourceRange)v;
-            }else if( v.getParent() instanceof SourceRange ){
-                debug = (SourceRange)v.getParent();
-            }
-            
-            if( debug!=null ){
-                Token tok = debug.getStart();
-                
-                int line = tok.getLine();
-                int charPos = tok.getCharPositionInLine() + 1;
-                String text = tok.getText();
-                
-                StringBuilder sb = new StringBuilder();
-                sb.append("\n");
-                sb.append("line="+line+" pos="+charPos+" text="+text);
-                return sb.toString();
-            }
-        }
-        return "";
     }
 }

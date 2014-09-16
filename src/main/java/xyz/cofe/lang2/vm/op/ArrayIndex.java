@@ -46,6 +46,7 @@ import xyz.cofe.lang2.vm.NullRefError;
 import xyz.cofe.lang2.vm.err.RuntimeError;
 import xyz.cofe.lang2.vm.Value;
 import xyz.cofe.collection.Pair;
+import xyz.cofe.lang2.vm.err.IndexOutOfArrayError;
 
 /**
  * Выражение доступа к полям объекта/элементам массива. <br/>
@@ -614,6 +615,7 @@ public class ArrayIndex extends AbstractTreeNode<Value> implements LValue
                 r = readMap((Map)base, r.index);
             if( r.success )return r.result;
         }
+        
         if( r==null )
             return readJREObject(base);
         else
@@ -907,15 +909,20 @@ public class ArrayIndex extends AbstractTreeNode<Value> implements LValue
                     }
                 }
             }
+
             
-            RuntimeError re = new RuntimeError(this, "object not contains field or method, or property "+index );
-            Logger.getLogger(ArrayIndex.class.getName()).log(Level.SEVERE, null, re);
-            throw re;
         } catch (IntrospectionException ex) {
             RuntimeError re = new RuntimeError(this, "IntrospectionException", ex);
             Logger.getLogger(ArrayIndex.class.getName()).log(Level.SEVERE, null, re);
             throw re;
         }
+        
+        return throwIndexOutOfArrayError(base, baseClass, index);
+    }
+    
+    protected Object throwIndexOutOfArrayError(Object base,Class baseClass,String index) throws RuntimeError {
+        RuntimeError re = new IndexOutOfArrayError(this, "object not contains field or method, or property "+index );
+        throw re;
     }
     
     public Object readJREObject(Object base){
