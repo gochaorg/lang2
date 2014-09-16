@@ -215,7 +215,7 @@ public class ScriptReader {
         boolean hasShebang = false;
         int shebangBegin = 0;
         int shebangEnd = 0;
-        if( header.hasShebang() ){
+        if( header!=null && header.hasShebang() ){
             hasShebang = true;
             shebangBegin = 0;
             int i = content.indexOf(header.getShebangEnd());
